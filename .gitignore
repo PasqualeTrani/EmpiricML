@@ -1,0 +1,76 @@
+# Byte-compiled / optimized /
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+sdist/
+eggs/
+*.egg-info/
+.installed.files
+htmlcov/
+.nox/
+.tox/
+venv/
+env/
+/tmp/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+/test-reports/
+
+# Python Environment
+venv/
+env/
+.venv/
+Pipfile.lock # Lock file is often committed, but can be ignored if preferred
+poetry.lock  # Lock file is often committed, but can be ignored if preferred
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.bak
+*~
+.DS_Store
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+/data/*.sqlite3
+
+# Framework-Specific Exclusions (Adjust based on your framework, e.g., Django, Flask, FastAPI)
+
+# Django-Specific
+/static/
+/media/
+/staticfiles/
+local_settings.py # Local configuration secrets
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Private files / secrets
+config/*.secret.yml
+config/*.local.json
+.env
+
+# data_files 
+.csv
+.parquet
+
+# notebooks 
+notebooks/

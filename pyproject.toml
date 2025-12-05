@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "EmpiricML"
+version = "0.1.0"
+authors = [
+    {name = "Pasquale Trani", email = "ptrani96ds@gmail.com"}
+]
+description = "Python framework for building robust tabular machine learning models faster and easier"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    # Your dependencies here, e.g.:
+    # "requests>=2.28.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/PasqualeTrani/EmpiricML"
+"Bug Tracker" = "https://github.com/PasqualeTrani/EmpiricML/issues"
