@@ -6,6 +6,9 @@ from pathlib import Path
 # wranglers 
 import polars as pl 
 
+# internal imports
+from empml.utils import log_execution_time
+
 
 # ------------------------------------------------------------------------------------------
 # DEFINITION OF THE ABSTRACT CLASS 
@@ -24,16 +27,19 @@ class DataDownloader(ABC):
 
 class CSVDownloader(DataDownloader):
     """Class for reading a CSV file and returns a Polars LazyFrame."""
-    def __init__(self, path : Path):
+    def __init__(self, path : str, separator : str = ';'):
         self.path = path
+        self.separator = separator
 
-    def get_data(self, separator : str = ',') -> pl.LazyFrame:
-        return pl.scan_csv(self.path, separator = separator) 
+    @log_execution_time
+    def get_data(self) -> pl.LazyFrame:
+        return pl.scan_csv(self.path, separator = self.separator) 
     
 class ParquetDownloader(DataDownloader):
     """Class for reading a Parquet file and returns a Polars LazyFrame."""
-    def __init__(self, path : Path):
+    def __init__(self, path : str):
         self.path = path
-
+        
+    @log_execution_time
     def get_data(self) -> pl.LazyFrame:
         return pl.scan_parquet(self.path) 
