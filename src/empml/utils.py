@@ -42,15 +42,3 @@ def log_execution_time(func):
 # ------------------------------------------------------------------------------------------
 # FUNCTIONS 
 # ------------------------------------------------------------------------------------------
-
-@log_execution_time
-def file_reader(file_path: Path) -> pl.DataFrame:
-    """Reads a CSV or Parquet file and returns a Polars DataFrame."""
-    extension = Path(file_path).suffix
-
-    if extension == '.csv':
-        return pl.read_csv(file_path)
-    elif extension in ['.parquet', '.pq']:
-        return pl.read_parquet(file_path)
-    else:
-        raise ValueError(f"Unsupported file extension: {extension}")
