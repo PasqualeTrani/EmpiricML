@@ -1,49 +1,15 @@
 # base imports 
-from abc import ABC, abstractmethod
 from typing import Union, Literal
 
 # data wranglers 
 import polars as pl
 import numpy as np
 
-# ------------------------------------------------------------------------------------------
-# ABSTRACT BASE TRANSFORMER
-# ------------------------------------------------------------------------------------------
-
-class BaseTransformer(ABC):
-    """Abstract base class for transformers that work with Polars LazyFrames."""
-    
-    @abstractmethod
-    def fit(self, lf: pl.LazyFrame):
-        """Fit the transformer on the data."""
-        pass
-    
-    @abstractmethod
-    def transform(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        """Transform the data."""
-        pass
-    
-    def fit_transform(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        """Fit and transform in one step."""
-        self.fit(lf)
-        return self.transform(lf)
+# internal imports 
+from empml.base import BaseTransformer, BaseEstimator # base classes 
     
 # ------------------------------------------------------------------------------------------
-# ABSTRACT BASE ESTIMATOR
-# ------------------------------------------------------------------------------------------
-
-class BaseEstimator(ABC):
-    """Abstract base class for estimators that work with Polars LazyFrames."""
-    @abstractmethod
-    def fit(self, df : pl.LazyFrame):
-        pass
-    
-    @abstractmethod
-    def predict(self, df : pl.LazyFrame):
-        pass
-    
-# ------------------------------------------------------------------------------------------
-# PIPELINE IMPLEMENTATION
+# PIPELINE 
 # ------------------------------------------------------------------------------------------
 
 class Pipeline:

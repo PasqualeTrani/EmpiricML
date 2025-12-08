@@ -1,25 +1,12 @@
-from abc import ABC, abstractmethod
-
+# wranglers 
 import polars as pl 
 import numpy as np
 
+# internal imports 
+from empml.base import Metric # base class 
 
 # ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT CLASS 
-# ------------------------------------------------------------------------------------------
-
-class Metric(ABC):
-    @abstractmethod
-    def compute_metric(self, lf: pl.LazyFrame, target: str, preds: str) -> float:
-        """
-        Computes the metric, strictly requiring a Polars LazyFrame as input.
-        The final calculation executes the lazy plan to return a scalar float.
-        """
-        pass
-
-
-# ------------------------------------------------------------------------------------------
-# IMPLEMENTATIONS 
+# Implementations of the Metric base class
 # ------------------------------------------------------------------------------------------
 
 class MSE(Metric):

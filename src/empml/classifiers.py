@@ -1,6 +1,3 @@
-# base imports 
-from abc import ABC, abstractmethod
-
 # data wranglers 
 import polars as pl
 import numpy as np
@@ -16,28 +13,14 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, HistG
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 
-# ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT CLASS 
-# ------------------------------------------------------------------------------------------
-
-class BaseClassifier(ABC):
-    @abstractmethod
-    def fit(self, df : pl.LazyFrame):
-        pass
-    
-    @abstractmethod
-    def predict(self, df : pl.LazyFrame):
-        pass
-
-    @abstractmethod
-    def predict_proba(self, df : pl.LazyFrame):
-        pass
+# internal imports 
+from empml.base import BaseEstimator
 
 # ------------------------------------------------------------------------------------------
 # CLASSIFIER IMPLEMENTATIONS 
 # ------------------------------------------------------------------------------------------
 
-class lgbm_clf(LGBMClassifier, BaseClassifier):
+class lgbm_clf(LGBMClassifier, BaseEstimator):
     """
     Extends LGBMClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -65,7 +48,7 @@ class lgbm_clf(LGBMClassifier, BaseClassifier):
         return super().predict_proba(X)
 
 
-class xgb_clf(XGBClassifier, BaseClassifier):
+class xgb_clf(XGBClassifier, BaseEstimator):
     """
     Extends XGBClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -93,7 +76,7 @@ class xgb_clf(XGBClassifier, BaseClassifier):
         return super().predict_proba(X)
 
 
-class ctb_clf(CatBoostClassifier, BaseClassifier):
+class ctb_clf(CatBoostClassifier, BaseEstimator):
     """
     Extends CatBoostClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -123,7 +106,7 @@ class ctb_clf(CatBoostClassifier, BaseClassifier):
 
 ## Linear Models (Logistic Regression)
 
-class lr_clf(LogisticRegression, BaseClassifier):
+class lr_clf(LogisticRegression, BaseEstimator):
     """
     Extends LogisticRegression to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -151,7 +134,7 @@ class lr_clf(LogisticRegression, BaseClassifier):
         return super().predict_proba(X)
 
 
-class en_clf(LogisticRegression, BaseClassifier):
+class en_clf(LogisticRegression, BaseEstimator):
     """
     Extends LogisticRegression with L1/L2 penalties (equivalent of ElasticNet) to 
     accept feature and target names on initialization and fit/predict using Polars LazyFrames.
@@ -181,7 +164,7 @@ class en_clf(LogisticRegression, BaseClassifier):
     
 ## K-Nearest Neighbors
 
-class knn_clf(KNeighborsClassifier, BaseClassifier):
+class knn_clf(KNeighborsClassifier, BaseEstimator):
     """
     Extends KNeighborsClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -211,7 +194,7 @@ class knn_clf(KNeighborsClassifier, BaseClassifier):
 
 ## Tree-Based Models
 
-class dt_clf(DecisionTreeClassifier, BaseClassifier):
+class dt_clf(DecisionTreeClassifier, BaseEstimator):
     """
     Extends DecisionTreeClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -239,7 +222,7 @@ class dt_clf(DecisionTreeClassifier, BaseClassifier):
         return super().predict_proba(X)
 
 
-class rf_clf(RandomForestClassifier, BaseClassifier):
+class rf_clf(RandomForestClassifier, BaseEstimator):
     """
     Extends RandomForestClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -267,7 +250,7 @@ class rf_clf(RandomForestClassifier, BaseClassifier):
         return super().predict_proba(X)
 
 
-class et_clf(ExtraTreesClassifier, BaseClassifier):
+class et_clf(ExtraTreesClassifier, BaseEstimator):
     """
     Extends ExtraTreesClassifier to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -295,7 +278,7 @@ class et_clf(ExtraTreesClassifier, BaseClassifier):
         return super().predict_proba(X)
     
     
-class svc_clf(SVC, BaseClassifier):
+class svc_clf(SVC, BaseEstimator):
     """
     Extends SVC to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -327,7 +310,7 @@ class svc_clf(SVC, BaseClassifier):
         return super().predict_proba(X)
 
 
-class hgb_clf(HistGradientBoostingClassifier, BaseClassifier):
+class hgb_clf(HistGradientBoostingClassifier, BaseEstimator):
     """
     Extends HistGradientBoostingClassifier to accept feature and target names 
     on initialization and fit/predict using Polars LazyFrames.
@@ -355,7 +338,7 @@ class hgb_clf(HistGradientBoostingClassifier, BaseClassifier):
         return super().predict_proba(X)
 
 
-class gnb_clf(GaussianNB, BaseClassifier):
+class gnb_clf(GaussianNB, BaseEstimator):
     """
     Extends GaussianNB to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.

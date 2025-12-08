@@ -1,21 +1,13 @@
-from abc import ABC, abstractmethod
-
+# wranglers 
 import polars as pl
 import numpy as np
 
+# internal imports 
+from empml.base import CVGenerator # base class 
 from empml.utils import log_execution_time
 
 # ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT CLASS 
-# ------------------------------------------------------------------------------------------
-
-class CVGenerator(ABC):
-    @abstractmethod
-    def split(self, lf : pl.LazyFrame, row_id : str) -> list[tuple[np.array]]:
-        pass 
-
-# ------------------------------------------------------------------------------------------
-# IMPLEMENTATIONS 
+# Implementation of the CVGenerator base class
 # ------------------------------------------------------------------------------------------
 
 class KFold(CVGenerator):

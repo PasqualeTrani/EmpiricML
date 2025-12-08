@@ -1,8 +1,10 @@
 from typing import Any
 
-from empml.data import DataDownloader
-from empml.metrics import Metric
-from empml.cv import CVGenerator
+from empml.base import (
+    DataDownloader, 
+    Metric, 
+    CVGenerator
+)
 
 
 class Lab: 

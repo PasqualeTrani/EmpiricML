@@ -1,6 +1,4 @@
 # standard import libraries 
-from dataclasses import dataclass 
-from abc import ABC, abstractmethod
 from pathlib import Path
 
 # wranglers 
@@ -8,21 +6,11 @@ import polars as pl
 
 # internal imports
 from empml.utils import log_execution_time
+from empml.base import DataDownloader # base class 
 
 
 # ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT CLASS 
-# ------------------------------------------------------------------------------------------
-
-class DataDownloader(ABC):
-    """Abstract class for downloading data into Polars LazyFrames."""
-    @abstractmethod
-    def get_data(self) -> pl.LazyFrame:
-        pass
-
-
-# ------------------------------------------------------------------------------------------
-# IMPLEMENTATIONS 
+# Implementations of the DataDownloader base class
 # ------------------------------------------------------------------------------------------
 
 class CSVDownloader(DataDownloader):

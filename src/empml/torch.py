@@ -1,6 +1,3 @@
-# base imports 
-from abc import ABC, abstractmethod
-
 # data wranglers 
 import polars as pl
 import numpy as np
@@ -11,18 +8,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 
-# ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT BASE CLASS (Copied for dependency self-containment) 
-# ------------------------------------------------------------------------------------------
-
-class BaseRegressor(ABC):
-    @abstractmethod
-    def fit(self, df : pl.LazyFrame):
-        pass
-    
-    @abstractmethod
-    def predict(self, df : pl.LazyFrame):
-        pass
+# internal imports 
+from empml.base import BaseEstimator
 
 # ------------------------------------------------------------------------------------------
 # PYTORCH MODEL DEFINITION
@@ -49,7 +36,7 @@ class SimpleMLP(nn.Module):
 # PYTORCH REGRESSOR IMPLEMENTATION (SKLEARN-STYLE WRAPPER)
 # ------------------------------------------------------------------------------------------
 
-class mlp_reg(BaseRegressor):
+class mlp_reg(BaseEstimator):
     """
     A PyTorch MLP wrapped to expose the scikit-learn-style fit and predict 
     interface using Polars LazyFrames for regression tasks.

@@ -1,6 +1,3 @@
-# base imports 
-from abc import ABC, abstractmethod
-
 # data wranglers 
 import polars as pl
 import numpy as np
@@ -15,24 +12,14 @@ from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, HistGra
 from sklearn.linear_model import LinearRegression, ElasticNet
 from sklearn.svm import SVR
 
-# ------------------------------------------------------------------------------------------
-# DEFINITION OF THE ABSTRACT CLASS 
-# ------------------------------------------------------------------------------------------
-
-class BaseRegressor(ABC):
-    @abstractmethod
-    def fit(self, df : pl.LazyFrame):
-        pass
-    
-    @abstractmethod
-    def predict(self, df : pl.LazyFrame):
-        pass
+# internal imports 
+from empml.base import BaseEstimator
 
 # ------------------------------------------------------------------------------------------
 # REGRESSOR IMPLEMENTATIONS 
 # ------------------------------------------------------------------------------------------
 
-class lgbm_reg(LGBMRegressor, BaseRegressor):
+class lgbm_reg(LGBMRegressor, BaseEstimator):
     """
     Extends LGBMRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -55,7 +42,7 @@ class lgbm_reg(LGBMRegressor, BaseRegressor):
         return super().predict(X)
 
 
-class xgb_reg(XGBRegressor, BaseRegressor):
+class xgb_reg(XGBRegressor, BaseEstimator):
     """
     Extends XGBRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -78,7 +65,7 @@ class xgb_reg(XGBRegressor, BaseRegressor):
         return super().predict(X)
     
 
-class ctb_reg(CatBoostRegressor, BaseRegressor):
+class ctb_reg(CatBoostRegressor, BaseEstimator):
     """
     Extends CatBoostRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -100,7 +87,7 @@ class ctb_reg(CatBoostRegressor, BaseRegressor):
         
         return super().predict(X)
     
-class lr_reg(LinearRegression, BaseRegressor):
+class lr_reg(LinearRegression, BaseEstimator):
     """
     Extends LinearRegression to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -123,7 +110,7 @@ class lr_reg(LinearRegression, BaseRegressor):
         return super().predict(X)
 
 
-class en_reg(ElasticNet, BaseRegressor):
+class en_reg(ElasticNet, BaseEstimator):
     """
     Extends ElasticNet to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -146,7 +133,7 @@ class en_reg(ElasticNet, BaseRegressor):
         return super().predict(X)
     
 
-class knn_reg(KNeighborsRegressor, BaseRegressor):
+class knn_reg(KNeighborsRegressor, BaseEstimator):
     """
     Extends KNeighborsRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -168,7 +155,7 @@ class knn_reg(KNeighborsRegressor, BaseRegressor):
         
         return super().predict(X)
 
-class dt_reg(DecisionTreeRegressor, BaseRegressor):
+class dt_reg(DecisionTreeRegressor, BaseEstimator):
     """
     Extends DecisionTreeRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -191,7 +178,7 @@ class dt_reg(DecisionTreeRegressor, BaseRegressor):
         return super().predict(X)
 
 
-class rf_reg(RandomForestRegressor, BaseRegressor):
+class rf_reg(RandomForestRegressor, BaseEstimator):
     """
     Extends RandomForestRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -214,7 +201,7 @@ class rf_reg(RandomForestRegressor, BaseRegressor):
         return super().predict(X)
 
 
-class et_reg(ExtraTreesRegressor, BaseRegressor):
+class et_reg(ExtraTreesRegressor, BaseEstimator):
     """
     Extends ExtraTreesRegressor to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -237,7 +224,7 @@ class et_reg(ExtraTreesRegressor, BaseRegressor):
         return super().predict(X)
     
     
-class svr_reg(SVR, BaseRegressor):
+class svr_reg(SVR, BaseEstimator):
     """
     Extends SVR to accept feature and target names on initialization
     and fit/predict using Polars LazyFrames.
@@ -260,7 +247,7 @@ class svr_reg(SVR, BaseRegressor):
         return super().predict(X)
 
 
-class hgb_reg(HistGradientBoostingRegressor, BaseRegressor):
+class hgb_reg(HistGradientBoostingRegressor, BaseEstimator):
     """
     Extends HistGradientBoostingRegressor to accept feature and target names 
     on initialization and fit/predict using Polars LazyFrames.
