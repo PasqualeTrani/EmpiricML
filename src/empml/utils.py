@@ -1,8 +1,15 @@
 import time
-import functools
+from functools import wraps
 import logging
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, Union
+from typing import (
+    Dict, 
+    Union, 
+    Tuple, 
+    Callable, 
+    Any
+)
 
 import polars as pl 
 import numpy as np
@@ -23,7 +30,7 @@ logging.basicConfig(
 def log_execution_time(func):
     """A decorator that logs start, end, and duration of a function."""
     
-    @functools.wraps(func)
+    @wraps(func)
     def wrapper(*args, **kwargs):
         func_name = func.__name__
         
@@ -44,10 +51,32 @@ def log_execution_time(func):
 
     return wrapper
 
+def time_execution(func: Callable) -> Callable:
+    """Decorator that returns function result and execution duration."""
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> Tuple[Any, float]:
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        duration = round(time.perf_counter() - start, 2)
+        return result, duration
+    return wrapper
+
 
 # ------------------------------------------------------------------------------------------
 # FUNCTIONS 
 # ------------------------------------------------------------------------------------------
+
+@contextmanager
+def log_step(step_name: str, verbose: bool):
+    """Context manager for logging step execution."""
+    if verbose:
+        logging.info(f'Start {step_name}...')
+    try:
+        yield
+    finally:
+        if verbose:
+            logging.info(f'✓ {step_name} ended.')
+
 
 def relative_performance(minimize : bool, x1 : float, x2 : float) -> float:
     """
@@ -60,6 +89,28 @@ def relative_performance(minimize : bool, x1 : float, x2 : float) -> float:
         performance = round(((x2 - x1)/(x1)) * 100 ,2)
 
     return performance
+
+
+def train_pipeline(pipeline: Pipeline, train: pl.LazyFrame) -> Pipeline:
+    """Train the pipeline on training data."""
+    pipeline.fit(train)
+    return pipeline
+
+
+def predict_with_pipeline(pipeline: Pipeline, data: pl.LazyFrame) -> np.array:
+    """Generate predictions using the pipeline."""
+    return pipeline.predict(data)
+
+
+def compute_score(
+    data: pl.LazyFrame, 
+    preds: np.array, 
+    metric: Metric, 
+    target: str
+) -> float:
+    """Compute metric score for predictions."""
+    data_with_preds = data.with_columns(pl.Series(preds).alias('preds'))
+    return metric.compute_metric(lf=data_with_preds, target=target, preds='preds')
 
 
 @log_execution_time
@@ -78,69 +129,28 @@ def eval_pipeline(
     Evalute pipeline performance by training on the train dataset and validate the prediction on valid dataset. 
     """
     
-    # TRAINING
+    with log_step('Training', verbose):
+        _, duration_train = time_execution(train_pipeline)(pipeline, train)
     
-    if verbose:
-        logging.info(f'Start training...')
-
-    start_train = time.perf_counter()
-
-    pipeline.fit(train)
-
-    end_train = time.perf_counter()
-    duration_train = round(end_train - start_train, 2)
-
-    if verbose:
-        logging.info(f'✓ Training ended.')
-
-    # INFERENCE 
-
-    if verbose:
-        logging.info(f'Start inference...')
-
-    start_inf = time.perf_counter()
-
-    preds = pipeline.predict(valid)
-
-    end_inf = time.perf_counter()
-    duration_inf = round(end_inf - start_inf, 2)
-
-    if verbose:
-        logging.info(f'✓ Inference ended.')
-
-    # PERFORMANCE ON VALIDATION 
-
-    valid = valid.with_columns(pl.Series(preds).alias('preds'))
-    score = metric.compute_metric(lf = valid, target = target, preds = 'preds')
-
-    # INFERENCE ON TRAINING 
+    with log_step('Inference', verbose):
+        preds, duration_inf = time_execution(predict_with_pipeline)(pipeline, valid)
+    
+    score = compute_score(valid, preds, metric, target)
+    
     if eval_overfitting:
-
-        if verbose:
-            logging.info(f'Start computing overfitting...')
-
-        train = train.with_columns(pl.Series(pipeline.predict(train)).alias('preds'))
-        score_on_train = metric.compute_metric(lf = train, target = target, preds = 'preds') 
-        overfitting = relative_performance(minimize, score, score_on_train)
-
-        if verbose:
-            logging.info(f'✓ Compute overfitting ended.')
-
+        with log_step('Computing Overfitting', verbose):
+            train_preds = predict_with_pipeline(pipeline, train)
+            score_on_train = compute_score(train, train_preds, metric, target)
+            overfitting = relative_performance(minimize, score, score_on_train)
     else:
-
         score_on_train = np.nan
         overfitting = np.nan
-
-    if not(store_preds):
-        preds = np.nan
-
-    results = {
-        'validation_score' : score, 
-        'train_score' : score_on_train, 
-        'overfitting' : overfitting, 
-        'duration_train' : duration_train, 
-        'duration_inf' : duration_inf, 
-        'preds' : preds
+    
+    return {
+        'validation_score': score, 
+        'train_score': score_on_train, 
+        'overfitting': overfitting, 
+        'duration_train': duration_train, 
+        'duration_inf': duration_inf, 
+        'preds': preds if store_preds else np.nan
     }
-
-    return results 
