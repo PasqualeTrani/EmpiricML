@@ -1,12 +1,14 @@
 # base imports 
-from typing import Union, Literal
+from typing import Union, Literal, Dict, List, Tuple
 
 # data wranglers 
 import polars as pl
 import numpy as np
 
 # internal imports 
-from empml.base import BaseTransformer, BaseEstimator # base classes 
+from empml.base import BaseTransformer, BaseEstimator, Metric # base classes 
+from empml.utils import log_execution_time, log_step, time_execution
+
     
 # ------------------------------------------------------------------------------------------
 # PIPELINE 
@@ -239,3 +241,125 @@ class Pipeline:
         steps_str = ",\n    ".join([f"('{name}', {step.__class__.__name__})" for name, step in self.steps])
         pipeline_type = "transformer-only" if self._is_transformer_only else "with estimator"
         return f"Pipeline({pipeline_type})[\n    {steps_str}\n]"
+    
+
+# ------------------------------------------------------------------------------------------
+# FUNCTIONS FOR PIPELINE EVALUATION 
+# ------------------------------------------------------------------------------------------
+
+def relative_performance(minimize : bool, x1 : float, x2 : float) -> float:
+    """
+    Compute the relative performance of a pipeline with score x2 with respect to another of score x1 (reference).
+    The same function can be used to compute overfitting.
+    """
+    if minimize:
+        performance = round(((x1 - x2)/(x1)) * 100 ,2)
+    else:
+        performance = round(((x2 - x1)/(x1)) * 100 ,2)
+
+    return performance
+
+
+def train_pipeline(pipeline: Pipeline, train: pl.LazyFrame) -> Pipeline:
+    """Train the pipeline on training data."""
+    pipeline.fit(train)
+    return pipeline
+
+
+def predict_with_pipeline(pipeline: Pipeline, data: pl.LazyFrame) -> np.array:
+    """Generate predictions using the pipeline."""
+    return pipeline.predict(data)
+
+
+def compute_score(
+    data: pl.LazyFrame, 
+    preds: np.array, 
+    metric: Metric, 
+    target: str
+) -> float:
+    """Compute metric score for predictions."""
+    data_with_preds = data.with_columns(pl.Series(preds).alias('preds'))
+    return metric.compute_metric(lf=data_with_preds, target=target, preds='preds')
+
+
+@log_execution_time
+def eval_pipeline_single_fold(
+    pipeline : Pipeline,
+    train : pl.LazyFrame, 
+    valid : pl.LazyFrame, 
+    metric : Metric, 
+    target : str,
+    minimize : bool, 
+    eval_overfitting : bool = True, 
+    store_preds : bool = True, 
+    verbose : bool = True
+) -> Dict[str, Union[float, np.array]]:
+    """
+    Evalute pipeline performance by training on the train dataset and validate the prediction on valid dataset. 
+    """
+    
+    with log_step('Training', verbose):
+        _, duration_train = time_execution(train_pipeline)(pipeline, train)
+    
+    with log_step('Inference', verbose):
+        preds, duration_inf = time_execution(predict_with_pipeline)(pipeline, valid)
+    
+    score = compute_score(valid, preds, metric, target)
+    
+    if eval_overfitting:
+        with log_step('Computing Overfitting', verbose):
+            train_preds = predict_with_pipeline(pipeline, train)
+            score_on_train = compute_score(train, train_preds, metric, target)
+            overfitting = relative_performance(minimize, score, score_on_train)
+    else:
+        score_on_train = np.nan
+        overfitting = np.nan
+    
+    return {
+        'validation_score': score, 
+        'train_score': score_on_train, 
+        'overfitting': overfitting, 
+        'duration_train': duration_train, 
+        'duration_inf': duration_inf, 
+        'preds': preds if store_preds else np.nan
+    }
+
+
+def eval_pipeline_cv(
+    pipeline : Pipeline,
+    lz : pl.LazyFrame, 
+    cv_indexes : List[Tuple[np.array]], 
+    row_id : str,
+    metric : Metric, 
+    target : str,
+    minimize : bool, 
+    eval_overfitting : bool = True, 
+    store_preds : bool = True, 
+    verbose : bool = True
+):
+    """
+    Evalute pipeline performance in a cross-validation fashion, by using cv_indexes. 
+    """
+    
+    fold_results = []
+    for fold, (train_idx, valid_idx) in enumerate(cv_indexes):
+
+        with log_step(f'Fold {fold+1}', verbose):
+
+            train = lz.filter(pl.col(row_id).is_in(train_idx))
+            valid = lz.filter(pl.col(row_id).is_in(valid_idx))
+            results = eval_pipeline_single_fold(
+                pipeline=pipeline, 
+                train=train, 
+                valid=valid,  
+                metric=metric, 
+                target=target,
+                minimize=minimize, 
+                eval_overfitting=eval_overfitting, 
+                store_preds=store_preds, 
+                verbose=verbose
+            )
+
+            fold_results.append(results)
+    
+    return fold_results
