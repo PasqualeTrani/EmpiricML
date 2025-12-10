@@ -4,7 +4,6 @@ import numpy as np
 
 # internal imports 
 from empml.base import CVGenerator # base class 
-from empml.utils import log_execution_time
 
 # ------------------------------------------------------------------------------------------
 # Implementation of the CVGenerator base class
@@ -17,7 +16,6 @@ class KFold(CVGenerator):
         self.n_splits = n_splits
         self.random_state = random_state
 
-    @log_execution_time
     def split(self, lf : pl.LazyFrame, row_id : str) -> list[tuple[np.array]]:
 
         shuffle_df : pl.DataFrame = lf.collect().sample(fraction=1, seed=0, shuffle=True)

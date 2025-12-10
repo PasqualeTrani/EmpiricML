@@ -4,6 +4,7 @@ import logging
 from contextlib import contextmanager
 from pathlib import Path
 from typing import (
+    List,
     Dict, 
     Union, 
     Tuple, 
@@ -114,7 +115,7 @@ def compute_score(
 
 
 @log_execution_time
-def eval_pipeline(
+def eval_pipeline_single_fold(
     pipeline : Pipeline,
     train : pl.LazyFrame, 
     valid : pl.LazyFrame, 
@@ -154,3 +155,43 @@ def eval_pipeline(
         'duration_inf': duration_inf, 
         'preds': preds if store_preds else np.nan
     }
+
+
+def eval_pipeline_cv(
+    pipeline : Pipeline,
+    lz : pl.LazyFrame, 
+    cv_indexes : List[Tuple[np.array]], 
+    row_id : str,
+    metric : Metric, 
+    target : str,
+    minimize : bool, 
+    eval_overfitting : bool = True, 
+    store_preds : bool = True, 
+    verbose : bool = True
+):
+    """
+    Evalute pipeline performance in a cross-validation fashion, by using cv_indexes. 
+    """
+    
+    lst = []
+    for fold, (train_idx, valid_idx) in enumerate(cv_indexes):
+
+        with log_step(f'Fold {fold+1}', verbose):
+
+            train = lz.filter(pl.col(row_id).is_in(train_idx))
+            valid = lz.filter(pl.col(row_id).is_in(valid_idx))
+            results = eval_pipeline_single_fold(
+                pipeline=pipeline, 
+                train=train, 
+                valid=valid,  
+                metric=metric, 
+                target=target,
+                minimize=minimize, 
+                eval_overfitting=eval_overfitting, 
+                store_preds=store_preds, 
+                verbose=verbose
+            )
+
+            lst.append(results)
+    
+    return lst
