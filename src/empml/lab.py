@@ -2,9 +2,10 @@ from typing import Any
 import uuid
 import os
 from datetime import datetime
-import pytz
+import pytz # type:ignore
+import pickle 
 
-import polars as pl
+import polars as pl # type:ignore
 
 from empml.base import (
     DataDownloader, 
@@ -13,9 +14,14 @@ from empml.base import (
 )
 
 from empml.pipelines import Pipeline, eval_pipeline_cv
+from empml.utils import log_execution_time
 
 
 class Lab:
+    # ------------------------------------------------------------------------------------------
+    # Initialization
+    # ------------------------------------------------------------------------------------------
+
     def __init__(
         self,
         train_downloader: DataDownloader,
@@ -80,7 +86,6 @@ class Lab:
         
         self.results_details = pl.DataFrame(
             schema={
-                'detail_id': pl.Int64,
                 'experiment_id': pl.Int64,
                 'fold_number': pl.Int64,
                 'validation_score': pl.Float64,
@@ -89,6 +94,9 @@ class Lab:
             }
         )
 
+    # ------------------------------------------------------------------------------------------
+    # Experiments Metrics
+    # ------------------------------------------------------------------------------------------
 
     def run_experiment(
             self,
@@ -99,8 +107,10 @@ class Lab:
             store_preds : bool = True, 
             verbose : bool = True
     ):
-        
-        eval = eval_pipeline_cv(
+        """Run an experiment and save all the metrics"""
+
+        # evaluate experiment metrics 
+        eval : pl.DataFrame = eval_pipeline_cv(
             pipeline = pipeline, 
             lz = self.train, 
             cv_indexes=self.cv_indexes,
@@ -113,10 +123,28 @@ class Lab:
             verbose=verbose
         )
 
-        eval_df = pl.DataFrame(eval)
+        # add new row to results table regarding the experiment
+        self._format_experiment_results(eval = eval, description = description, notes = notes)
 
-        results = (
-            eval_df.drop('preds').mean()
+        # add new rows to details table regarding the experiment
+        self._format_experiment_details(eval = eval)
+
+        # save pipeline
+        self._save_pipeline(pipeline=pipeline)
+
+        # save predictions
+        self._save_predictions_(eval=eval)
+
+        # set new experiment_id for the next one 
+        self.next_experiment_id+=1 
+
+
+    def _format_experiment_results(self, eval : pl.DataFrame, description : str = '', notes : str = ''):
+        """Add row to results table regarding an experiment"""
+
+        # computing metrics from eval dataframe (output of eval_pipeline_cv function)
+        tmp = (
+            eval.drop('preds').mean()
             .rename({
                 'validation_score' : 'cv_mean_score', 
                 'train_score' : 'train_mean_score', 
@@ -125,27 +153,69 @@ class Lab:
                 'duration_inf' : 'mean_inference_time_s',
             })
 
-            .with_columns(pl.lit(eval_df['validation_score'].std()).alias('cv_std_score'))
+            .with_columns(pl.lit(eval['validation_score'].std()).alias('cv_std_score'))
 
             .with_columns(
                 pl.lit(self.next_experiment_id).alias('experiment_id'),
                 pl.lit(description).alias('description'), 
                 pl.lit(notes).alias('notes'), 
                 pl.lit(True).alias('is_completed'), 
-              #  pl.lit(self.name).alias('lab_name'),
                 pl.lit(datetime.now(pytz.timezone('UTC'))).dt.replace_time_zone(None).alias('timestamp_utc')
             )
         )
 
-        print(results.select([self.results.columns]).columns)
-        print(self.results.columns)
-
         self.results = pl.concat([
             self.results,
-            results.select(self.results.columns)
+            tmp.select(self.results.columns)
         ], how = 'vertical_relaxed')
 
-        self.next_experiment_id+=1 
+
+    def _format_experiment_details(self, eval : pl.DataFrame):
+        """Add rows to results details table regarding an experiment"""
+
+        # computing metrics from eval dataframe (output of eval_pipeline_cv function)
+        tmp = (
+            eval
+            .drop(['preds', 'duration_train', 'duration_inf'])
+            .with_row_index()
+            .rename({'index': 'fold_number'})
+            .with_columns(
+                pl.col('fold_number')+1, 
+                pl.lit(self.next_experiment_id).alias('experiment_id')
+            )
+            .rename({'overfitting': 'overfitting_pct'})
+        )
+
+        self.results_details = pl.concat([
+            self.results_details,
+            tmp.select(self.results_details.columns)
+        ], how = 'vertical_relaxed')
+
+    def _save_pipeline(self, pipeline : Pipeline):
+        """Save pipeline used in an experiment"""
+        pickle.dump(pipeline, open(f'./{self.name}/pipelines/pipeline_{self.next_experiment_id}.pkl', 'wb'))
+
+
+    @log_execution_time
+    def _save_predictions_(self, eval : pl.DataFrame):
+        """Save predictions created in an experimento to a parquet file"""
+        preds = (
+            eval
+            .select('preds')
+            .with_row_index()
+            .rename({'index': 'fold_number'})
+            .with_columns(pl.col('fold_number')+1)
+            .explode('preds')
+        )
+
+        preds.write_parquet(
+            f'./{self.name}/predictions/predictions_{self.next_experiment_id}.parquet',
+            compression = 'zstd', 
+            compression_level = 22
+        )
+
+
+        
 
 
 

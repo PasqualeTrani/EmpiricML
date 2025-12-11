@@ -2,7 +2,7 @@
 from pathlib import Path
 
 # wranglers 
-import polars as pl 
+import polars as pl  # type: ignore
 
 # internal imports
 from empml.utils import log_execution_time

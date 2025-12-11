@@ -1,12 +1,12 @@
 # wranglers 
-import polars as pl
-import numpy as np
+import polars as pl # type:ignore
+import numpy as np # type:ignore
 
 # internal imports 
 from empml.base import CVGenerator # base class 
 
 # ------------------------------------------------------------------------------------------
-# Implementation of the CVGenerator base class
+# Implementations of the CVGenerator base class
 # ------------------------------------------------------------------------------------------
 
 class KFold(CVGenerator):

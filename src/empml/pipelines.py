@@ -1,9 +1,9 @@
 # base imports 
-from typing import Union, Literal, Dict, List, Tuple
+from typing import Union, Dict, List, Tuple
 
 # data wranglers 
-import polars as pl
-import numpy as np
+import polars as pl # type: ignore
+import numpy as np # type: ignore
 
 # internal imports 
 from empml.base import BaseTransformer, BaseEstimator, Metric # base classes 
@@ -321,7 +321,7 @@ def eval_pipeline_single_fold(
         'overfitting': overfitting, 
         'duration_train': duration_train, 
         'duration_inf': duration_inf, 
-        'preds': preds if store_preds else np.nan
+        'preds': list(preds) if store_preds else np.nan
     }
 
 
@@ -336,7 +336,7 @@ def eval_pipeline_cv(
     eval_overfitting : bool = True, 
     store_preds : bool = True, 
     verbose : bool = True
-):
+) -> pl.DataFrame:
     """
     Evalute pipeline performance in a cross-validation fashion, by using cv_indexes. 
     """
@@ -362,4 +362,4 @@ def eval_pipeline_cv(
 
             fold_results.append(results)
     
-    return fold_results
+    return pl.DataFrame(fold_results)
