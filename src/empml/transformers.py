@@ -1,9 +1,9 @@
 # base imports 
-from typing import Union, Literal, List, Dict
+from typing import Union, Literal, List, Dict, Tuple
 
 # data wranglers 
-import polars as pl
-import numpy as np
+import polars as pl # type:ignore
+import numpy as np # type:ignore
 
 # internal imports 
 from empml.base import BaseTransformer
@@ -95,6 +95,19 @@ class SkewFeatures(BaseTransformer):
     
     def transform(self, X : pl.LazyFrame):
         return X.with_columns(pl.Series(X.select(self.features).collect().to_pandas().skew(1)).alias(self.new_feature))
+    
+
+class ModuleFeatures(BaseTransformer):
+    def __init__(self, features : Tuple[str, str], new_feature : str):
+        self.features = features
+        self.new_feature = new_feature
+
+    def fit(self, X : pl.LazyFrame):
+        return self
+    
+    def transform(self, X : pl.LazyFrame):
+        f1, f2 = self.features # the two features on which compute the module
+        return X.with_columns(((pl.col(f1)**2) + (pl.col(f2)**2)).sqrt().alias(self.new_feature))
     
 
 # ------------------------------------------------------------------------------------------
@@ -278,6 +291,59 @@ class OrdinalEncoder(BaseTransformer):
             )
         
         return transf_X
+
+
+# -------------------- DUMMY ENCODING -------------------------------- #
+
+class DummyEncoder(BaseTransformer):
+    def __init__(self, features: List[str]):
+        self.features = features
+    
+    def fit(self, X: pl.LazyFrame):
+        self.encoding_dict: Dict[str, List[str]] = {}
+        
+        for f in self.features:
+            # Get unique non-null values for each feature
+            unique_values = (
+                X.select(f)
+                .filter(pl.col(f).is_not_null())
+                .unique()
+                .collect()
+                .get_column(f)
+                .to_list()
+            )
+            self.encoding_dict[f] = sorted(unique_values)
+        
+        return self
+    
+    def transform(self, X: pl.LazyFrame):
+        transf_X = X.clone()
+        
+        for f in self.features:
+            known_categories = self.encoding_dict[f]
+            
+            # Create dummy columns for each known category
+            for category in known_categories:
+                transf_X = transf_X.with_columns(
+                    (pl.col(f) == category).cast(pl.Int8).alias(f'{f}_dummy_{category}')
+                )
+            
+            # Create column for null values
+            transf_X = transf_X.with_columns(
+                pl.col(f).is_null().cast(pl.Int8).alias(f'{f}_dummy_null')
+            )
+            
+            # Create column for unknown categories
+            # Unknown = not null AND not in any known category
+            is_known = pl.lit(False)
+            for category in known_categories:
+                is_known = is_known | (pl.col(f) == category)
+            
+            transf_X = transf_X.with_columns(
+                (pl.col(f).is_not_null() & ~is_known).cast(pl.Int8).alias(f'{f}_dummy_unknown')
+            )
+        
+        return transf_X
     
 
 # ------------------------------------------------------------------------------------------
@@ -354,4 +420,55 @@ class MinMaxScaler(BaseTransformer):
         return transf_X
     
 
+
+# ------------------------------------------------------------------------------------------
+# Transformation on Features
+# ------------------------------------------------------------------------------------------   
+
+class Log1pFeatures(BaseTransformer):
+    def __init__(self, features : List[str], new_features_suffix : str):
+        self.features = features
+        self.new_feature_suffix = new_features_suffix
+
+    def fit(self, X : pl.LazyFrame):
+        return self
     
+    def transform(self, X : pl.LazyFrame):
+        return X.with_columns((pl.col(f)+1).log().alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+    
+
+class Expm1Features(BaseTransformer):
+    def __init__(self, features : List[str], new_features_suffix : str):
+        self.features = features
+        self.new_feature_suffix = new_features_suffix
+
+    def fit(self, X : pl.LazyFrame):
+        return self
+    
+    def transform(self, X : pl.LazyFrame):
+        return X.with_columns((pl.col(f)-1).exp().alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+    
+
+class PowerFeatures(BaseTransformer):
+    def __init__(self, features : List[str], new_features_suffix : str, power : float = 2):
+        self.features = features
+        self.new_feature_suffix = new_features_suffix
+        self.power = power
+
+    def fit(self, X : pl.LazyFrame):
+        return self
+    
+    def transform(self, X : pl.LazyFrame):
+        return X.with_columns((pl.col(f)).pow(self.power).alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+    
+
+class InverseFeatures(BaseTransformer):
+    def __init__(self, features : List[str], new_features_suffix : str):
+        self.features = features
+        self.new_feature_suffix = new_features_suffix
+
+    def fit(self, X : pl.LazyFrame):
+        return self
+    
+    def transform(self, X : pl.LazyFrame):
+        return X.with_columns((1/pl.col(f)).alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
