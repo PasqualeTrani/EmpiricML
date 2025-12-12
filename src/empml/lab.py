@@ -13,8 +13,8 @@ from empml.base import (
     CVGenerator
 )
 
-from empml.pipelines import Pipeline, eval_pipeline_cv
-from empml.utils import log_execution_time
+from empml.pipelines import Pipeline, eval_pipeline_single_fold
+from empml.utils import log_execution_time, log_step
 
 
 class Lab:
@@ -109,19 +109,28 @@ class Lab:
     ):
         """Run an experiment and save all the metrics"""
 
-        # evaluate experiment metrics 
-        eval : pl.DataFrame = eval_pipeline_cv(
-            pipeline = pipeline, 
-            lz = self.train, 
-            cv_indexes=self.cv_indexes,
-            row_id = self.row_id,
-            metric=self.metric, 
-            target=self.target,
-            minimize=self.minimize, 
-            eval_overfitting=eval_overfitting, 
-            store_preds=store_preds, 
-            verbose=verbose
-        )
+        fold_results = []
+        for fold, (train_idx, valid_idx) in enumerate(self.cv_indexes):
+
+            with log_step(f'Fold {fold+1}', verbose):
+
+                train = self.train.filter(pl.col(self.row_id).is_in(train_idx))
+                valid = self.train.filter(pl.col(self.row_id).is_in(valid_idx))
+                results = eval_pipeline_single_fold(
+                    pipeline=pipeline, 
+                    train=train, 
+                    valid=valid,  
+                    metric=self.metric, 
+                    target=self.target,
+                    minimize=self.minimize, 
+                    eval_overfitting=eval_overfitting, 
+                    store_preds=store_preds, 
+                    verbose=verbose
+                )
+
+                fold_results.append(results)
+                
+        eval = pl.DataFrame(fold_results)
 
         # add new row to results table regarding the experiment
         self._format_experiment_results(eval = eval, description = description, notes = notes)
