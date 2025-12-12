@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 # wranglers 
-import polars as pl 
-import numpy as np
+import polars as pl # type:ignore
+import numpy as np # type:ignore
 
 # ------------------------------------------------------------------------------------------
 # Data Downloader 
