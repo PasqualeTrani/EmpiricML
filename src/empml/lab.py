@@ -1,9 +1,11 @@
-from typing import Any
+from typing import Any, Dict
 import uuid
 import os
 from datetime import datetime
 import pytz # type:ignore
 import pickle 
+from dataclasses import dataclass 
+import math
 
 import polars as pl # type:ignore
 
@@ -13,9 +15,42 @@ from empml.base import (
     CVGenerator
 )
 
-from empml.pipelines import Pipeline, eval_pipeline_single_fold
+from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
 from empml.utils import log_execution_time, log_step
+from empml.lab_utils import (
+    setup_row_id_column, 
+    create_results_schema, 
+    create_results_details_schema, 
+    format_experiment_results, 
+    format_experiment_details, 
+    prepare_predictions_for_save, 
+    log_performance_against
+)
 
+# --- Logging Setup ---
+import logging 
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+
+@dataclass 
+class EvalParams:
+    kfold_threshold : float
+    alpha : float
+    n_iters : int
+
+# text formatting 
+RED = '\033[31m'
+GREEN = '\033[32m'
+BOLD = '\033[1m'
+RESET = '\033[0m'
+
+
+# ------------------------------------------------------------------------------------------
+# Lab Class
+# ------------------------------------------------------------------------------------------
 
 class Lab:
     # ------------------------------------------------------------------------------------------
@@ -28,6 +63,7 @@ class Lab:
         metric: Metric,
         cv_generator: CVGenerator,
         target: str,
+        eval_params : EvalParams,
         minimize: bool = True,
         row_id: str | None = None,
         test_downloader: DataDownloader | None = None,
@@ -45,7 +81,13 @@ class Lab:
         self._setup_results_tracking()
         
         self.cv_indexes = self.cv_generator.split(self.train, self.row_id)
-        self.next_experiment_id = 0 
+        self.n_folds = len(self.cv_indexes)
+
+        self.eval_params = eval_params
+        self.n_folds_threshold = math.floor((1-self.eval_params.kfold_threshold) * self.n_folds)
+                                               
+        self.next_experiment_id = 1 
+        self.best_experiment = None
 
     def _setup_directories(self):
         """Create lab directory structure."""
@@ -60,39 +102,15 @@ class Lab:
 
     def _setup_row_id(self, row_id):
         """Setup row identifier column."""
-        if row_id:
-            self.row_id = row_id
-        else:
-            self.train = self.train.with_row_index().rename({'index': 'row_id'})
-            self.row_id = 'row_id'
+        self.train, self.row_id = setup_row_id_column(self.train, row_id)
 
     def _setup_results_tracking(self):
         """Initialize Polars DataFrames for tracking experiments."""
-        self.results = pl.DataFrame(
-            schema={
-                'experiment_id': pl.Int64,
-                'description': pl.Utf8,
-                'cv_mean_score': pl.Float64,
-                'train_mean_score': pl.Float64,
-                'mean_overfitting_pct': pl.Float64,
-                'cv_std_score': pl.Float64,
-                'mean_train_time_s': pl.Float64,
-                'mean_inference_time_s': pl.Float64,
-                'is_completed': pl.Boolean,
-                'notes': pl.Utf8,
-                'timestamp_utc': pl.Datetime,
-            }
-        )
-        
-        self.results_details = pl.DataFrame(
-            schema={
-                'experiment_id': pl.Int64,
-                'fold_number': pl.Int64,
-                'validation_score': pl.Float64,
-                'train_score': pl.Float64,
-                'overfitting_pct': pl.Float64,
-            }
-        )
+        self.results = create_results_schema()
+        self.results_details = create_results_details_schema()
+
+    def _set_best_experiment(self, experiment_id : int):
+        self.best_experiment = experiment_id
 
     # ------------------------------------------------------------------------------------------
     # Experiments Metrics
@@ -103,129 +121,86 @@ class Lab:
             pipeline : Pipeline,
             description : str = '',
             notes : str = '',
-            eval_overfitting : bool = True, 
-            store_preds : bool = True, 
-            verbose : bool = True
+            eval_overfitting : bool = True,
+            store_preds : bool = True,
+            verbose : bool = True, 
+            compare_against : int | None  = None
     ):
-        """Run an experiment and save all the metrics"""
-
-        fold_results = []
-        for fold, (train_idx, valid_idx) in enumerate(self.cv_indexes):
-
-            with log_step(f'Fold {fold+1}', verbose):
-
-                train = self.train.filter(pl.col(self.row_id).is_in(train_idx))
-                valid = self.train.filter(pl.col(self.row_id).is_in(valid_idx))
-                results = eval_pipeline_single_fold(
-                    pipeline=pipeline, 
-                    train=train, 
-                    valid=valid,  
-                    metric=self.metric, 
-                    target=self.target,
-                    minimize=self.minimize, 
-                    eval_overfitting=eval_overfitting, 
-                    store_preds=store_preds, 
-                    verbose=verbose
-                )
-
-                fold_results.append(results)
-                
-        eval = pl.DataFrame(fold_results)
-
-        # add new row to results table regarding the experiment
-        self._format_experiment_results(eval = eval, description = description, notes = notes)
-
-        # add new rows to details table regarding the experiment
-        self._format_experiment_details(eval = eval)
-
-        # save pipeline
-        self._save_pipeline(pipeline=pipeline)
-
-        # save predictions
-        self._save_predictions_(eval=eval)
-
-        # set new experiment_id for the next one 
-        self.next_experiment_id+=1 
-
-
-    def _format_experiment_results(self, eval : pl.DataFrame, description : str = '', notes : str = ''):
-        """Add row to results table regarding an experiment"""
-
-        # computing metrics from eval dataframe (output of eval_pipeline_cv function)
-        tmp = (
-            eval.drop('preds').mean()
-            .rename({
-                'validation_score' : 'cv_mean_score', 
-                'train_score' : 'train_mean_score', 
-                'overfitting' : 'mean_overfitting_pct', 
-                'duration_train' : 'mean_train_time_s' ,
-                'duration_inf' : 'mean_inference_time_s',
-            })
-
-            .with_columns(pl.lit(eval['validation_score'].std()).alias('cv_std_score'))
-
-            .with_columns(
-                pl.lit(self.next_experiment_id).alias('experiment_id'),
-                pl.lit(description).alias('description'), 
-                pl.lit(notes).alias('notes'), 
-                pl.lit(True).alias('is_completed'), 
-                pl.lit(datetime.now(pytz.timezone('UTC'))).dt.replace_time_zone(None).alias('timestamp_utc')
-            )
+        """Run an experiment and save all the metrics. If compare_against is valorized the experiment may be interrupted earlier, due to the """
+        
+        eval = eval_pipeline_cv(
+            pipeline=pipeline, 
+            lz=self.train, 
+            cv_indexes=self.cv_indexes, 
+            row_id=self.row_id,
+            metric=self.metric, 
+            target=self.target, 
+            minimize=self.minimize, 
+            eval_overfitting=eval_overfitting, 
+            store_preds=store_preds,
+            verbose=verbose, 
+            compare_df=self.results_details.filter(pl.col('experiment_id')==compare_against) if compare_against else pl.DataFrame(), 
+            th_lower_performance_n_folds = self.n_folds_threshold
         )
 
+        # Add new row to results table regarding the experiment
+        self._update_results_table(eval=eval, description=description, notes=notes)
+
+        # Add new rows to details table regarding the experiment
+        self._update_details_table(eval=eval)
+
+        # Save pipeline
+        self._save_pipeline(pipeline=pipeline)
+
+        # Save predictions
+        self._save_predictions(eval=eval)
+
+        if compare_against and eval.shape[0] == self.n_folds:
+            self.compare_experiments(experiment_id_a = compare_against, experiment_id_b = self.next_experiment_id)
+        elif eval.shape[0]<self.n_folds:
+            logging.info(f"{BOLD}{RED}Experiment arrested since comparison showed no improvement over baseline experiment.{RESET}")
+        else:
+            pass
+        
+        # Set new experiment_id for the next one
+        self.next_experiment_id += 1
+
+    def _update_results_table(self, eval: pl.DataFrame, description: str = '', notes: str = ''):
+        """Add row to results table regarding an experiment"""
+        tmp = format_experiment_results(eval, self.next_experiment_id, eval.shape[0] == self.n_folds, description, notes)
         self.results = pl.concat([
             self.results,
             tmp.select(self.results.columns)
-        ], how = 'vertical_relaxed')
+        ], how='vertical_relaxed')
 
-
-    def _format_experiment_details(self, eval : pl.DataFrame):
+    def _update_details_table(self, eval: pl.DataFrame):
         """Add rows to results details table regarding an experiment"""
-
-        # computing metrics from eval dataframe (output of eval_pipeline_cv function)
-        tmp = (
-            eval
-            .drop(['preds', 'duration_train', 'duration_inf'])
-            .with_row_index()
-            .rename({'index': 'fold_number'})
-            .with_columns(
-                pl.col('fold_number')+1, 
-                pl.lit(self.next_experiment_id).alias('experiment_id')
-            )
-            .rename({'overfitting': 'overfitting_pct'})
-        )
-
+        tmp = format_experiment_details(eval, self.next_experiment_id)
         self.results_details = pl.concat([
             self.results_details,
             tmp.select(self.results_details.columns)
-        ], how = 'vertical_relaxed')
+        ], how='vertical_relaxed')
 
-    def _save_pipeline(self, pipeline : Pipeline):
+    def _save_pipeline(self, pipeline: Pipeline):
         """Save pipeline used in an experiment"""
-        pickle.dump(pipeline, open(f'./{self.name}/pipelines/pipeline_{self.next_experiment_id}.pkl', 'wb'))
-
+        pickle.dump(
+            pipeline,
+            open(f'./{self.name}/pipelines/pipeline_{self.next_experiment_id}.pkl', 'wb')
+        )
 
     @log_execution_time
-    def _save_predictions_(self, eval : pl.DataFrame):
-        """Save predictions created in an experimento to a parquet file"""
-        preds = (
-            eval
-            .select('preds')
-            .with_row_index()
-            .rename({'index': 'fold_number'})
-            .with_columns(pl.col('fold_number')+1)
-            .explode('preds')
-        )
-
+    def _save_predictions(self, eval: pl.DataFrame):
+        """Save predictions created in an experiment to a parquet file"""
+        preds = prepare_predictions_for_save(eval)
         preds.write_parquet(
             f'./{self.name}/predictions/predictions_{self.next_experiment_id}.parquet',
-            compression = 'zstd', 
-            compression_level = 22
+            compression='zstd',
+            compression_level=22
         )
 
-
-        
-
-
-
-        
+    def compare_experiments(self, experiment_id_a : int, experiment_id_b : int):
+        """Compare results between two experiments"""
+        results_a = self.results_details.filter(pl.col('experiment_id')==experiment_id_a)
+        results_b = self.results_details.filter(pl.col('experiment_id')==experiment_id_b)
+        comparison = compare_results_stats(results_a, results_b, minimize = self.minimize)
+        log_performance_against(comparison = comparison, threshold = self.eval_params.kfold_threshold)

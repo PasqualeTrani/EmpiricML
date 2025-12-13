@@ -8,6 +8,7 @@ import numpy as np # type: ignore
 # internal imports 
 from empml.base import BaseTransformer, BaseEstimator, Metric # base classes 
 from empml.utils import log_execution_time, log_step, time_execution
+from empml.lab_utils import format_experiment_details
 
     
 # ------------------------------------------------------------------------------------------
@@ -252,6 +253,9 @@ def relative_performance(minimize : bool, x1 : float, x2 : float) -> float:
     Compute the relative performance of a pipeline with score x2 with respect to another of score x1 (reference).
     The same function can be used to compute overfitting.
     """
+    if not x2:
+        return None 
+    
     if minimize:
         performance = round(((x1 - x2)/(x1)) * 100 ,2)
     else:
@@ -293,7 +297,7 @@ def eval_pipeline_single_fold(
     eval_overfitting : bool = True, 
     store_preds : bool = True, 
     verbose : bool = True
-) -> Dict[str, Union[float, np.array]]:
+) -> Dict[str, Union[float, List[float]]]:
     """
     Evalute pipeline performance by training on the train dataset and validate the prediction on valid dataset. 
     """
@@ -335,7 +339,9 @@ def eval_pipeline_cv(
     minimize : bool, 
     eval_overfitting : bool = True, 
     store_preds : bool = True, 
-    verbose : bool = True
+    verbose : bool = True, 
+    compare_df : pl.DataFrame = pl.DataFrame(), 
+    th_lower_performance_n_folds : int | None = None
 ) -> pl.DataFrame:
     """
     Evalute pipeline performance in a cross-validation fashion, by using cv_indexes. 
@@ -361,5 +367,84 @@ def eval_pipeline_cv(
             )
 
             fold_results.append(results)
+
+            # if compare_df is not null compare partial results with the latter, in order to stop the evaluation of the pipeline if it performs bad on too many folds.
+            if compare_df.shape[0]>0:
+                partial_df = format_experiment_details(pl.DataFrame(fold_results), experiment_id = None)
+                comparison = compare_results_stats(results_a = compare_df, results_b = partial_df, minimize = minimize)
+                if comparison['n_folds_lower_performance']<=th_lower_performance_n_folds:
+                    continue
+                else:
+                    break
     
     return pl.DataFrame(fold_results)
+
+
+def compare_results_stats(results_a : pl.DataFrame, results_b : pl.DataFrame, minimize : bool) -> Dict[str, Union[float, pl.DataFrame]]:
+    """Compute pipelines results stats, i.e. two different output of the eval_pipeline_cv function """
+
+    # build compare dataframe 
+    results_a = results_a.rename({col : f'{col}_a' for col in results_a.columns if col!='fold_number'})
+    results_b = results_b.rename({col : f'{col}_b' for col in results_b.columns if col!='fold_number'})
+    compare_df = results_a.join(results_b, how = 'left', on = ['fold_number'])
+
+    # MAIN STATS 
+    # mean cv score performance 
+    mean_cv_performance = relative_performance(
+        minimize = minimize, 
+        x1 = compare_df['validation_score_a'].mean(), 
+        x2 = compare_df['validation_score_b'].mean()
+    )
+
+    # single fold validation performance 
+    fold_performances = (
+        compare_df
+            .with_columns(
+                pl.struct(["validation_score_a", "validation_score_b"])
+                .map_elements(lambda x: relative_performance(minimize=minimize, x1 = x['validation_score_a'], x2 = x['validation_score_b'])).alias('relative_performance')
+            )
+            .select(['fold_number', 'relative_performance'])
+    )
+
+    # single fold overfittings - minimize = True
+    fold_performances_overfitting = (
+        compare_df
+            .with_columns(
+                pl.struct(["overfitting_pct_a", "overfitting_pct_b"])
+                .map_elements(lambda x: relative_performance(minimize=True, x1 = x['overfitting_pct_a'], x2 = x['overfitting_pct_b'])).alias('relative_performance_overfitting')
+            )
+            .select(['fold_number', 'relative_performance_overfitting'])
+    )
+
+    # mean overfitting - minimize always True
+    mean_cv_performance_overfitting = relative_performance(
+        minimize = True, 
+        x1 = compare_df['overfitting_pct_a'].mean(), 
+        x2 = compare_df['overfitting_pct_b'].mean()
+    )
+
+    # std cv performance - minimize always True
+    std_cv_performance = relative_performance(
+        minimize = True, 
+        x1 = compare_df['validation_score_a'].std(), 
+        x2 = compare_df['validation_score_b'].std()
+    )
+
+    n_folds_better_performance = fold_performances.filter(pl.col('relative_performance')>0).shape[0]  # for comparison on terminated experiments
+    perc_of_folds_b_better_then_a = round((n_folds_better_performance/results_a.shape[0]) * 100, 2) 
+
+    n_folds_lower_performance = fold_performances.filter(pl.col('relative_performance')<=0).shape[0] # for interrupting the results evaluation prematurely 
+
+    return {
+        # cv aggregate stats - float/int values 
+        'mean_cv_performance' : mean_cv_performance, 
+        'mean_cv_performance_overfitting' : mean_cv_performance_overfitting,
+        'std_cv_performance' : std_cv_performance, 
+        'n_folds_better_performance' : n_folds_better_performance, 
+        'n_folds_lower_performance' : n_folds_lower_performance, 
+        'perc_of_folds_b_better_then_a' : perc_of_folds_b_better_then_a,
+
+        # single fold stats - they are polars dataframes
+        'fold_performances' : fold_performances, 
+        'fold_performances_overfitting' : fold_performances_overfitting
+    }
