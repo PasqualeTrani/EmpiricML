@@ -256,6 +256,9 @@ class Lab:
             from lightgbm import LGBMClassifier as lgb
             from xgboost import XGBClassifier as xgb
             from catboost import CatBoostClassifier as ctb
+            from sklearn.neural_network import MLPClassifier as mlp
+            from sklearn.tree import DecisionTreeClassifier as dtree
+            from sklearn.ensemble import HistGradientBoostingClassifier as hgb
             
             estimators = {
                 'logistic_regression_base': SKlearnPipeline([
@@ -277,9 +280,19 @@ class Lab:
                     ('impute', SimpleImputer()), 
                     ('clf', rf(random_state=0, n_jobs=-1))
                 ]),
+                'decision_tree_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('clf', dtree())
+                ]),
                 'lightgbm_base': lgb(verbose=-1, random_state=0),
                 'xgboost_base': xgb(verbosity=0, random_state=0),
-                'catboost_base': ctb(verbose=0, random_state=0)
+                'catboost_base': ctb(verbose=0, random_state=0), 
+                'hgb_base' : hgb(),
+                'mlp_base' : SKlearnPipeline([
+                    ('imputer', SimpleImputer()), 
+                    ('scaler', StandardScaler()),
+                    ('clf', mlp(hidden_layer_sizes = (64,32)))
+                ]),
             }
             wrapper_class = ClassifierWrapper  
             
@@ -292,6 +305,9 @@ class Lab:
             from lightgbm import LGBMRegressor as lgb
             from xgboost import XGBRegressor as xgb
             from catboost import CatBoostRegressor as ctb
+            from sklearn.neural_network import MLPRegressor as mlp
+            from sklearn.tree import DecisionTreeRegressor as dtree
+            from sklearn.ensemble import HistGradientBoostingRegressor as hgb
             
             estimators = {
                 'linear_regression_base': SKlearnPipeline([
@@ -313,9 +329,19 @@ class Lab:
                     ('impute', SimpleImputer()), 
                     ('reg', rf(random_state=0, n_jobs=-1))
                 ]),
+                'decision_tree_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('reg', dtree())
+                ]),
                 'lightgbm_base': lgb(verbose=-1),
                 'xgboost_base': xgb(verbosity=0),
-                'catboost_base': ctb(verbose=0)
+                'catboost_base': ctb(verbose=0), 
+                'hgb_base' : hgb(),
+                'mlp_base' : SKlearnPipeline([
+                    ('imputer', SimpleImputer()), 
+                    ('scaler', StandardScaler()),
+                    ('reg', mlp(hidden_layer_sizes = (64,32)))
+                ]),
             }
             wrapper_class = RegressorWrapper
 
