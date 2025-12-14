@@ -37,9 +37,16 @@ logging.basicConfig(
 
 @dataclass 
 class EvalParams:
-    kfold_threshold : float
-    alpha : float
-    n_iters : int
+    kfold_threshold : float = 0.6
+
+@dataclass
+class ExperimentConfig:
+    """Configuration for running an experiment."""
+    description: str = ''
+    notes: str = ''
+    eval_overfitting: bool = True
+    store_preds: bool = True
+    verbose: bool = True
 
 # text formatting 
 RED = '\033[31m'
@@ -117,16 +124,13 @@ class Lab:
     # ------------------------------------------------------------------------------------------
 
     def run_experiment(
-            self,
-            pipeline : Pipeline,
-            description : str = '',
-            notes : str = '',
-            eval_overfitting : bool = True,
-            store_preds : bool = True,
-            verbose : bool = True, 
-            compare_against : int | None  = None
+        self,
+        pipeline: Pipeline,
+        config: ExperimentConfig | None = None,
+        compare_against: int | None = None
     ):
-        """Run an experiment and save all the metrics. If compare_against is valorized the experiment may be interrupted earlier, due to the """
+        """Run an experiment and save all the metrics."""
+        config = config or ExperimentConfig()
         
         eval = eval_pipeline_cv(
             pipeline=pipeline, 
@@ -136,15 +140,14 @@ class Lab:
             metric=self.metric, 
             target=self.target, 
             minimize=self.minimize, 
-            eval_overfitting=eval_overfitting, 
-            store_preds=store_preds,
-            verbose=verbose, 
+            eval_overfitting=config.eval_overfitting, 
+            store_preds=config.store_preds,
+            verbose=config.verbose, 
             compare_df=self.results_details.filter(pl.col('experiment_id')==compare_against) if compare_against else pl.DataFrame(), 
-            th_lower_performance_n_folds = self.n_folds_threshold
+            th_lower_performance_n_folds=self.n_folds_threshold
         )
 
-        # Add new row to results table regarding the experiment
-        self._update_results_table(eval=eval, description=description, notes=notes)
+        self._update_results_table(eval=eval, description=config.description, notes=config.notes)
 
         # Add new rows to details table regarding the experiment
         self._update_details_table(eval=eval)
@@ -158,7 +161,7 @@ class Lab:
         if compare_against and eval.shape[0] == self.n_folds:
             self.compare_experiments(experiment_id_a = compare_against, experiment_id_b = self.next_experiment_id)
         elif eval.shape[0]<self.n_folds:
-            logging.info(f"{BOLD}{RED}Experiment arrested since comparison showed no improvement over baseline experiment.{RESET}")
+            logging.info(f"{BOLD}{RED}Experiment arrested since comparison showed no improvement over baseline.{RESET}")
         else:
             pass
         

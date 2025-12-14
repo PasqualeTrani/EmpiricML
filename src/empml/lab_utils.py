@@ -3,6 +3,12 @@ from datetime import datetime
 import pytz
 from typing import Dict
 
+# ANSI escape codes for colors in print and logging 
+RED = '\033[31m'
+GREEN = '\033[32m'
+BLUE = '\033[34m'
+BOLD = '\033[1m'
+RESET = '\033[0m'
 
 # ------------------------------------------------------------------------------------------
 # Setting up functions
@@ -143,10 +149,6 @@ def prepare_predictions_for_save(eval: pl.DataFrame) -> pl.DataFrame:
 
 def format_log_performance(x : float, th : float) -> str:
     """Format logging performance to highlight good and bad performance"""
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    BOLD = '\033[1m'
-    RESET = '\033[0m'
 
     if x>th: # good performance in green
         return f"{BOLD}{GREEN}{str(x)}%{RESET}"
@@ -156,6 +158,13 @@ def format_log_performance(x : float, th : float) -> str:
 
 def log_performance_against(comparison : Dict[str, float], threshold : float):
     """Print performance stats for comparing two experiments."""
+    
+    print(f"\n{BOLD}{BLUE}Relative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline){RESET}")
+    print(f"""
+    {BOLD}{BLUE}Note: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in {RESET}{BOLD}{GREEN}GREEN{RESET}, 
+    {BOLD}{BLUE}while negative performances are indicated in {BOLD}{RED}RED{RESET}\n
+    """)
+
     print(f'Mean CV Score Experiment B vs A: {format_log_performance(comparison['mean_cv_performance'], 0)}')
     print(f'Std CV Score Experiment B vs A: {format_log_performance(comparison['std_cv_performance'], 0)}\n')
 
