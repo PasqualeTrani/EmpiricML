@@ -55,7 +55,7 @@ class Pipeline:
             ('model', lgbm_reg(features=['col1', 'col2'], target='target'))
         ])
     """
-    def __init__(self, steps: list[tuple[str, Union[BaseTransformer, BaseEstimator, 'Pipeline']]]):
+    def __init__(self, steps: list[tuple[str, Union[BaseTransformer, BaseEstimator, 'Pipeline']]], name : str = '', description : str = ''):
         """
         Parameters:
         -----------
@@ -68,6 +68,9 @@ class Pipeline:
         self.steps = steps
         self._validate_steps()
         self._is_transformer_only = self._check_if_transformer_only()
+
+        self.name = name 
+        self.description = description
     
     def _validate_steps(self):
         """Validate that steps are properly configured."""

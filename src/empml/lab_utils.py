@@ -33,6 +33,7 @@ def create_results_schema() -> pl.DataFrame:
     return pl.DataFrame(
         schema={
             'experiment_id': pl.Int64,
+            'name': pl.Utf8,
             'description': pl.Utf8,
             'cv_mean_score': pl.Float64,
             'train_mean_score': pl.Float64,
@@ -41,7 +42,6 @@ def create_results_schema() -> pl.DataFrame:
             'mean_train_time_s': pl.Float64,
             'mean_inference_time_s': pl.Float64,
             'is_completed': pl.Boolean,
-            'notes': pl.Utf8,
             'timestamp_utc': pl.Datetime,
         }
     )
@@ -69,7 +69,7 @@ def format_experiment_results(
     experiment_id: int,
     is_completed : bool,
     description: str = '',
-    notes: str = ''
+    name: str = ''
 ) -> pl.DataFrame:
     """
     Transform evaluation results into experiment summary format.
@@ -96,7 +96,7 @@ def format_experiment_results(
         .with_columns(
             pl.lit(experiment_id).alias('experiment_id'),
             pl.lit(description).alias('description'),
-            pl.lit(notes).alias('notes'),
+            pl.lit(name).alias('name'),
             pl.lit(is_completed).alias('is_completed'),
             pl.lit(datetime.now(pytz.timezone('UTC'))).dt.replace_time_zone(None).alias('timestamp_utc')
         )
@@ -158,7 +158,7 @@ def format_log_performance(x : float, th : float) -> str:
 
 def log_performance_against(comparison : Dict[str, float], threshold : float):
     """Print performance stats for comparing two experiments."""
-    
+
     print(f"\n{BOLD}{BLUE}Relative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline){RESET}")
     print(f"""
     {BOLD}{BLUE}Note: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in {RESET}{BOLD}{GREEN}GREEN{RESET}, 

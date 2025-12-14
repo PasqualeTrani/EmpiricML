@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 import uuid
 import os
 from datetime import datetime
@@ -39,21 +39,12 @@ logging.basicConfig(
 class EvalParams:
     kfold_threshold : float = 0.6
 
-@dataclass
-class ExperimentConfig:
-    """Configuration for running an experiment."""
-    description: str = ''
-    notes: str = ''
-    eval_overfitting: bool = True
-    store_preds: bool = True
-    verbose: bool = True
-
-# text formatting 
+# ANSI escape codes for colors in print and logging 
 RED = '\033[31m'
 GREEN = '\033[32m'
+BLUE = '\033[34m'
 BOLD = '\033[1m'
 RESET = '\033[0m'
-
 
 # ------------------------------------------------------------------------------------------
 # Lab Class
@@ -126,11 +117,12 @@ class Lab:
     def run_experiment(
         self,
         pipeline: Pipeline,
-        config: ExperimentConfig | None = None,
+        eval_overfitting : bool = True, 
+        store_preds : bool = True, 
+        verbose : bool = True,
         compare_against: int | None = None
     ):
         """Run an experiment and save all the metrics."""
-        config = config or ExperimentConfig()
         
         eval = eval_pipeline_cv(
             pipeline=pipeline, 
@@ -140,14 +132,14 @@ class Lab:
             metric=self.metric, 
             target=self.target, 
             minimize=self.minimize, 
-            eval_overfitting=config.eval_overfitting, 
-            store_preds=config.store_preds,
-            verbose=config.verbose, 
+            eval_overfitting=eval_overfitting, 
+            store_preds=store_preds,
+            verbose=verbose, 
             compare_df=self.results_details.filter(pl.col('experiment_id')==compare_against) if compare_against else pl.DataFrame(), 
             th_lower_performance_n_folds=self.n_folds_threshold
         )
 
-        self._update_results_table(eval=eval, description=config.description, notes=config.notes)
+        self._update_results_table(eval=eval, description=pipeline.description, name=pipeline.name)
 
         # Add new rows to details table regarding the experiment
         self._update_details_table(eval=eval)
@@ -168,9 +160,9 @@ class Lab:
         # Set new experiment_id for the next one
         self.next_experiment_id += 1
 
-    def _update_results_table(self, eval: pl.DataFrame, description: str = '', notes: str = ''):
+    def _update_results_table(self, eval: pl.DataFrame, description: str = '', name: str = ''):
         """Add row to results table regarding an experiment"""
-        tmp = format_experiment_results(eval, self.next_experiment_id, eval.shape[0] == self.n_folds, description, notes)
+        tmp = format_experiment_results(eval, self.next_experiment_id, eval.shape[0] == self.n_folds, description, name)
         self.results = pl.concat([
             self.results,
             tmp.select(self.results.columns)
@@ -207,3 +199,29 @@ class Lab:
         results_b = self.results_details.filter(pl.col('experiment_id')==experiment_id_b)
         comparison = compare_results_stats(results_a, results_b, minimize = self.minimize)
         log_performance_against(comparison = comparison, threshold = self.eval_params.kfold_threshold)
+
+    # ------------------------------------------------------------------------------------------
+    # MULTI-EXPERIMENTS
+    # ------------------------------------------------------------------------------------------
+    
+    def multi_run_experiment(
+        self,
+        pipelines: List[Pipeline],
+        eval_overfitting : bool = True, 
+        store_preds : bool = True, 
+        verbose : bool = True,
+        compare_against: int | None = None
+    ):
+        """Run multiple experiments with a single command."""
+        
+        for i, pipeline in enumerate(pipelines):
+            
+            with log_step(f'Experiment {i+1}', verbose):
+
+                self.run_experiment(
+                    pipeline=pipeline, 
+                    eval_overfitting=eval_overfitting, 
+                    store_preds=store_preds,
+                    verbose=verbose,
+                    compare_against=compare_against
+                )
