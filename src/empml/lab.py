@@ -16,6 +16,7 @@ from empml.base import (
 )
 
 from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
+from empml.estimators import RegressorWrapper, ClassifierWrapper
 from empml.utils import log_execution_time, log_step
 from empml.lab_utils import (
     setup_row_id_column, 
@@ -213,10 +214,11 @@ class Lab:
         compare_against: int | None = None
     ):
         """Run multiple experiments with a single command."""
-        
+        logging.info(f'{BOLD}{BLUE}Total Number of Experiments to run: {len(pipelines)}{RESET}')
+
         for i, pipeline in enumerate(pipelines):
             
-            with log_step(f'Experiment {i+1}', verbose):
+            with log_step(f'{BOLD}{BLUE}Experiment {i+1} with name = {pipeline.name}{RESET}', verbose):
 
                 self.run_experiment(
                     pipeline=pipeline, 
@@ -225,3 +227,126 @@ class Lab:
                     verbose=verbose,
                     compare_against=compare_against
                 )
+
+    def run_base_experiments(
+        self, 
+        features: str, 
+        preprocess_pipe : Pipeline | None = None, 
+        eval_overfitting: bool = True, 
+        store_preds: bool = True, 
+        verbose: bool = True,
+        compare_against: int | None = None,
+        problem_type: str = 'regression'  # 'regression' or 'classification'
+    ):
+        """Run multiple experiments by using base estimators"""
+
+        from sklearn.pipeline import Pipeline as SKlearnPipeline
+        from sklearn.impute import SimpleImputer
+        from sklearn.preprocessing import StandardScaler
+        
+        # Determine if classification or regression
+        is_classification = problem_type.lower() == 'classification'
+        
+        if is_classification:
+            # Classification imports
+            from sklearn.linear_model import LogisticRegression as log_reg
+            from sklearn.svm import SVC as svc
+            from sklearn.neighbors import KNeighborsClassifier as knn
+            from sklearn.ensemble import RandomForestClassifier as rf
+            from lightgbm import LGBMClassifier as lgb
+            from xgboost import XGBClassifier as xgb
+            from catboost import CatBoostClassifier as ctb
+            
+            estimators = {
+                'logistic_regression_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('clf', log_reg(max_iter=1000))
+                ]),
+                'knn_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('clf', knn())
+                ]),
+                'svm_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('clf', svc())
+                ]),
+                'random_forest_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('clf', rf(random_state=0, n_jobs=-1))
+                ]),
+                'lightgbm_base': lgb(verbose=-1, random_state=0),
+                'xgboost_base': xgb(verbosity=0, random_state=0),
+                'catboost_base': ctb(verbose=0, random_state=0)
+            }
+            wrapper_class = ClassifierWrapper  
+            
+        else:
+            # Regression imports
+            from sklearn.linear_model import LinearRegression as lr
+            from sklearn.svm import SVR as svr
+            from sklearn.neighbors import KNeighborsRegressor as knn
+            from sklearn.ensemble import RandomForestRegressor as rf
+            from lightgbm import LGBMRegressor as lgb
+            from xgboost import XGBRegressor as xgb
+            from catboost import CatBoostRegressor as ctb
+            
+            estimators = {
+                'linear_regression_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('reg', lr())
+                ]),
+                'knn_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('reg', knn())
+                ]),
+                'svm_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('scaler', StandardScaler()), 
+                    ('reg', svr())
+                ]),
+                'random_forest_base': SKlearnPipeline([
+                    ('impute', SimpleImputer()), 
+                    ('reg', rf(random_state=0, n_jobs=-1))
+                ]),
+                'lightgbm_base': lgb(verbose=-1),
+                'xgboost_base': xgb(verbosity=0),
+                'catboost_base': ctb(verbose=0)
+            }
+            wrapper_class = RegressorWrapper
+
+        # Create pipelines
+        if preprocess_pipe:
+            pipes = [
+                Pipeline([
+                    ('preprocess', preprocess_pipe),
+                    ('model', wrapper_class(estimator=estimator, features=features, target=self.target))
+                ], 
+                name=name, 
+                description=f'{name} with features = {features}'
+                )
+                for name, estimator in estimators.items()
+            ]
+        else:
+            pipes = [
+                Pipeline([
+                    ('model', wrapper_class(estimator=estimator, features=features, target=self.target))
+                ], 
+                name=name, 
+                description=f'{name} with features = {features}'
+                )
+                for name, estimator in estimators.items()
+            ]
+
+
+        self.multi_run_experiment(
+            pipelines=pipes, 
+            eval_overfitting=eval_overfitting, 
+            store_preds=store_preds, 
+            verbose=verbose, 
+            compare_against=compare_against
+        )
