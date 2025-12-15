@@ -376,3 +376,31 @@ class Lab:
             verbose=verbose, 
             compare_against=compare_against
         )
+
+
+    # ------------------------------------------------------------------------------------------
+    # RETRIEVE PIPELINE PREDICTIONS
+    # ------------------------------------------------------------------------------------------
+
+    def retrieve_predictions(self, experiment_ids = List[int], extra_features : List[str] = []) -> pl.LazyFrame:
+        """
+        Retrieve the predictions made by all the pipelines indicated into experiment_ids
+        """
+        base_preds = pl.concat([
+                pl.LazyFrame(self.cv_indexes[j][1], schema=[self.row_id]).with_columns(pl.lit(j+1).alias('fold_number')) 
+                for j in range(len(self.cv_indexes))
+            ], 
+            how = 'vertical_relaxed'
+        )
+
+        base_preds = base_preds.join(self.train.select([self.row_id, self.target] + extra_features), how = 'left', on = self.row_id)
+
+        preds = (
+            base_preds
+            .with_columns(
+                pl.read_parquet(f'./{self.name}/predictions/predictions_{idx}.parquet').to_series().alias(f'preds_{idx}') 
+                for idx in experiment_ids
+            )
+        )
+
+        return preds

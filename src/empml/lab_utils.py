@@ -140,9 +140,9 @@ def prepare_predictions_for_save(eval: pl.DataFrame) -> pl.DataFrame:
     return (
         eval
         .select('preds')
-        .with_row_index()
-        .rename({'index': 'fold_number'})
-        .with_columns(pl.col('fold_number') + 1)
+        # .with_row_index()
+        # .rename({'index': 'fold_number'})
+        # .with_columns(pl.col('fold_number') + 1)
         .explode('preds')
     )
 
