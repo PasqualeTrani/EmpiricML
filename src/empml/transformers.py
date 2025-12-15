@@ -472,3 +472,47 @@ class InverseFeatures(BaseTransformer):
     
     def transform(self, X : pl.LazyFrame):
         return X.with_columns((1/pl.col(f)).alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+
+
+
+# ------------------------------------------------------------------------------------------
+# Imputers
+# ------------------------------------------------------------------------------------------
+
+class SimpleImputer(BaseTransformer):
+    def __init__(self, features : List[str], strategy : str = 'mean'):
+        self.features = features
+
+        if not strategy in ['mean', 'median']:
+            raise ValueError('SimpleImputer strategy params could be only "mean" or "median".')
+        else:
+            self.strategy = strategy
+
+    def fit(self, X : pl.LazyFrame):
+        if self.strategy == 'median':
+            self.values = X.select(self.features).median()
+        else:
+            self.values = X.select(self.features).mean()
+        
+        return self
+
+    def transform(self, X : pl.LazyFrame):
+
+        transf_X = (
+            X
+            .with_columns(pl.col(col).fill_null(self.values.select([col]).collect().item()) for col in self.features)
+            .with_columns(pl.col(col).fill_nan(self.values.select([col]).collect().item()) for col in self.features)
+        )
+
+        return transf_X
+
+class FillNulls(BaseTransformer):
+    def __init__(self, features : List[str], value : float = -9999):
+        self.value = value
+        self.features = features
+
+    def fit(self, X : pl.LazyFrame):        
+        return self
+
+    def transform(self, X : pl.LazyFrame):
+        return X.with_columns(pl.col(col).fill_null(self.value).fill_nan(self.value) for col in self.features)
