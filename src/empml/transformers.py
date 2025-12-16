@@ -516,3 +516,67 @@ class FillNulls(BaseTransformer):
 
     def transform(self, X : pl.LazyFrame):
         return X.with_columns(pl.col(col).fill_null(self.value).fill_nan(self.value) for col in self.features)
+
+
+# ------------------------------------------------------------------------------------------
+# Lags 
+# ------------------------------------------------------------------------------------------
+
+class GenerateLags(BaseTransformer):
+    def __init__(
+        self,
+        ts_index : str, 
+        date_col : str, 
+        lag_col : str, 
+        lag_frequency : str = 'days', 
+        lag_min : int = 1, 
+        lag_max : int = 1, 
+        lag_step : int = 1
+    ):
+        time_arguments = [
+            "weeks",
+            "days",
+            "hours",
+            "minutes",
+            "seconds",
+            "milliseconds",
+            "microseconds",
+            "nanoseconds"
+        ]
+        self.ts_index = ts_index
+        self.date_col = date_col
+        self.lag_col = lag_col
+        self.lag_min = lag_min
+        self.lag_max = lag_max
+        self.lag_step = lag_step
+
+        if lag_frequency in time_arguments:
+            self.lag_frequency = lag_frequency
+        else:
+            raise ValueError(f'lag_frequency should be in the following list: {time_arguments}')
+
+    def fit(self, X : pl.LazyFrame):
+        self.base_lag = X.select([self.ts_index, self.date_col, self.lag_col]) # base lazyframe for lag computing 
+        return self
+    
+    def transform(self, X : pl.LazyFrame):
+        # concat of the lazyframes and drop duplicates for training 
+        base = pl.concat([
+            self.base_lag, 
+            X.select([self.ts_index, self.date_col, self.lag_col])]
+        ).unique() 
+
+        time_unit = X.select(self.date_col).collect().to_series().dtype.time_unit
+
+        for delta in range(self.lag_min, self.lag_max + 1, self.lag_step):
+            duration_dct = {self.lag_frequency : delta, 'time_unit' : time_unit}
+            X = (
+                X
+                .join(
+                    base.with_columns(pl.col(self.date_col) + pl.duration(**duration_dct)).rename({self.lag_col : f'{self.lag_col}_lag{delta}{self.lag_frequency}'}), 
+                    how = 'left', 
+                    on = [self.ts_index, self.date_col]
+                )
+            )
+
+        return X
