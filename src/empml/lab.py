@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 import uuid
 import os
 from datetime import datetime
+import time 
 import pytz # type:ignore
 import pickle 
 from dataclasses import dataclass 
@@ -49,6 +50,7 @@ BLUE = '\033[34m'
 BOLD = '\033[1m'
 RESET = '\033[0m'
 
+
 # ------------------------------------------------------------------------------------------
 # Lab Class
 # ------------------------------------------------------------------------------------------
@@ -75,6 +77,9 @@ class Lab:
         self.cv_generator = cv_generator
         self.target = target
         self.minimize = minimize
+
+        self.train_downloader = train_downloader
+        self.test_downloader = test_downloader
         
         self._setup_directories()
         self._load_data(train_downloader, test_downloader)
@@ -95,6 +100,7 @@ class Lab:
         base = f'./{self.name}'
         os.makedirs(f'{base}/pipelines', exist_ok=True)
         os.makedirs(f'{base}/predictions', exist_ok=True)
+        os.makedirs(f'{base}/check_points', exist_ok=True)
 
     def _load_data(self, train_downloader, test_downloader):
         """Load training and test data."""
@@ -406,3 +412,16 @@ class Lab:
         )
 
         return preds
+    
+
+    def save_check_point(self, check_point_name : str | None = None) -> None:
+        """Save check point of the lab"""
+
+        check_point_name_ref = check_point_name if check_point_name else str(int(time.time()))
+        pickle.dump(self, open(f'./{self.name}/check_points/{check_point_name_ref}.pkl', 'wb'))
+
+
+
+def restore_check_point(lab_name : str, check_point_name : str) -> Lab:
+    """Restore a lab checkpoint."""
+    return pickle.load(open(f'./{lab_name}/check_points/{check_point_name}.pkl', 'rb'))
