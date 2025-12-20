@@ -1,8 +1,9 @@
 import polars as pl 
 import numpy as np
+import pandas as pd 
 from datetime import datetime 
 import pytz
-from typing import Dict
+from typing import Dict, List
 
 # ANSI escape codes for colors in print and logging 
 RED = '\033[31m'
@@ -188,3 +189,29 @@ def retrieve_predictions_from_path(lab_name : str, experiment_id : int) -> pl.Ex
         return expr 
     else:
         return pl.lit(np.nan).alias(f'preds_{experiment_id}')
+    
+
+def generate_params_list(
+    params_list : Dict[str, List[float | int | str]], 
+    search_type : str = 'grid', 
+    num_samples : int = 64, 
+    random_state : int = 0
+) -> List[Dict[str, float]]:
+    
+    """Generate a list of paramaters to test in an HPO procedure starting from a dictionary with list of parameters."""
+
+    params_df = pd.Series(params_list).reset_index().transpose()
+    params_df.columns = params_df.iloc[0]
+    params_df=params_df.iloc[1:]
+
+    for c in params_df.columns:
+        params_df = params_df.explode(c, ignore_index=True)
+
+    if search_type == 'grid':
+        sample = params_df
+    elif search_type == 'random':
+        sample = params_df.sample(n=num_samples, random_state=random_state)
+    else:
+        raise ValueError("search_type argument should be 'grid' or 'random'")
+
+    return [dict(row) for i, row in sample.iterrows()]

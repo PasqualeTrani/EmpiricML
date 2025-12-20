@@ -3,12 +3,12 @@ import uuid
 import os
 from datetime import datetime
 import time 
-import pytz # type:ignore
 import pickle 
 from dataclasses import dataclass 
-import math
 
-import polars as pl # type:ignore
+from sklearn.base import BaseEstimator as SKlearnEstimator
+
+import polars as pl 
 
 from empml.base import (
     DataDownloader, 
@@ -16,6 +16,7 @@ from empml.base import (
     CVGenerator
 )
 
+from empml.transformers import Identity
 from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
 from empml.estimators import RegressorWrapper, ClassifierWrapper
 from empml.utils import log_execution_time, log_step
@@ -27,7 +28,8 @@ from empml.lab_utils import (
     format_experiment_details, 
     prepare_predictions_for_save, 
     log_performance_against, 
-    retrieve_predictions_from_path
+    retrieve_predictions_from_path, 
+    generate_params_list
 )
 
 # --- Logging Setup ---
@@ -236,6 +238,7 @@ class Lab:
                     compare_against=compare_against
                 )
 
+
     def run_base_experiments(
         self, 
         features: str, 
@@ -379,6 +382,51 @@ class Lab:
 
         self.multi_run_experiment(
             pipelines=pipes, 
+            eval_overfitting=eval_overfitting, 
+            store_preds=store_preds, 
+            verbose=verbose, 
+            compare_against=compare_against
+        )
+
+
+    # ------------------------------------------------------------------------------------------
+    # HPO
+    # ------------------------------------------------------------------------------------------
+
+    def hpo(
+        self, 
+        features : List[str], 
+        params_list : Dict[str, List[float | int | str]], 
+        estimator : SKlearnEstimator, 
+        preprocessor : Pipeline | Identity = Identity(), 
+        eval_overfitting : bool = True, 
+        store_preds : bool = True, 
+        verbose : bool = True,
+        compare_against: int | None = None, 
+        search_type : str = 'grid', 
+        num_samples : int = 64, 
+        random_state : int = 0
+    ):
+        """Create an HPO procedure for a sklearn estimator"""
+        
+        pipelines = [
+                Pipeline(steps=[
+                ('preprocessor', preprocessor), 
+                ('estimator', RegressorWrapper(estimator = estimator(**p), features=features, target=self.target))
+            ], 
+            name = f'{p}', 
+            description = f'hpo with params = {p}'
+            )
+        for p in generate_params_list(
+            params_list=params_list, 
+            search_type=search_type, 
+            num_samples=num_samples, 
+            random_state=random_state
+        )
+        ]
+
+        self.multi_run_experiment(
+            pipelines=pipelines, 
             eval_overfitting=eval_overfitting, 
             store_preds=store_preds, 
             verbose=verbose, 
