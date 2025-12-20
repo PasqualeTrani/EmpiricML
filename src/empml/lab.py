@@ -25,7 +25,8 @@ from empml.lab_utils import (
     format_experiment_results, 
     format_experiment_details, 
     prepare_predictions_for_save, 
-    log_performance_against
+    log_performance_against, 
+    retrieve_predictions_from_path
 )
 
 # --- Logging Setup ---
@@ -38,7 +39,8 @@ logging.basicConfig(
 
 @dataclass 
 class EvalParams:
-    kfold_threshold : float = 0.6
+    n_folds_threshold : int
+
 
 # ANSI escape codes for colors in print and logging 
 RED = '\033[31m'
@@ -83,7 +85,7 @@ class Lab:
         self.n_folds = len(self.cv_indexes)
 
         self.eval_params = eval_params
-        self.n_folds_threshold = math.floor((1-self.eval_params.kfold_threshold) * self.n_folds)
+        self.n_folds_threshold = eval_params.n_folds_threshold
                                                
         self.next_experiment_id = 1 
         self.best_experiment = None
@@ -199,7 +201,7 @@ class Lab:
         results_a = self.results_details.filter(pl.col('experiment_id')==experiment_id_a)
         results_b = self.results_details.filter(pl.col('experiment_id')==experiment_id_b)
         comparison = compare_results_stats(results_a, results_b, minimize = self.minimize)
-        log_performance_against(comparison = comparison, threshold = self.eval_params.kfold_threshold)
+        log_performance_against(comparison = comparison, n_folds_threshold = self.eval_params.n_folds_threshold)
 
     # ------------------------------------------------------------------------------------------
     # MULTI-EXPERIMENTS
@@ -398,7 +400,7 @@ class Lab:
         preds = (
             base_preds
             .with_columns(
-                pl.read_parquet(f'./{self.name}/predictions/predictions_{idx}.parquet').to_series().alias(f'preds_{idx}') 
+                retrieve_predictions_from_path(lab_name=self.name, experiment_id=idx) 
                 for idx in experiment_ids
             )
         )

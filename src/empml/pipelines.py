@@ -391,6 +391,8 @@ def compare_results_stats(results_a : pl.DataFrame, results_b : pl.DataFrame, mi
     results_b = results_b.rename({col : f'{col}_b' for col in results_b.columns if col!='fold_number'})
     compare_df = results_a.join(results_b, how = 'left', on = ['fold_number'])
 
+    n_folds = compare_df.shape[0]
+
     # MAIN STATS 
     # mean cv score performance 
     mean_cv_performance = relative_performance(
@@ -434,8 +436,6 @@ def compare_results_stats(results_a : pl.DataFrame, results_b : pl.DataFrame, mi
     )
 
     n_folds_better_performance = fold_performances.filter(pl.col('relative_performance')>0).shape[0]  # for comparison on terminated experiments
-    perc_of_folds_b_better_then_a = round((n_folds_better_performance/results_a.shape[0]) * 100, 2) 
-
     n_folds_lower_performance = fold_performances.filter(pl.col('relative_performance')<=0).shape[0] # for interrupting the results evaluation prematurely 
 
     return {
@@ -444,8 +444,8 @@ def compare_results_stats(results_a : pl.DataFrame, results_b : pl.DataFrame, mi
         'mean_cv_performance_overfitting' : mean_cv_performance_overfitting,
         'std_cv_performance' : std_cv_performance, 
         'n_folds_better_performance' : n_folds_better_performance, 
-        'n_folds_lower_performance' : n_folds_lower_performance, 
-        'perc_of_folds_b_better_then_a' : perc_of_folds_b_better_then_a,
+        'n_folds_lower_performance' : n_folds_lower_performance,
+        'n_folds' : n_folds,
 
         # single fold stats - they are polars dataframes
         'fold_performances' : fold_performances, 

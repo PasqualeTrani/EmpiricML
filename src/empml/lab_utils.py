@@ -1,4 +1,5 @@
 import polars as pl 
+import numpy as np
 from datetime import datetime 
 import pytz
 from typing import Dict
@@ -140,23 +141,24 @@ def prepare_predictions_for_save(eval: pl.DataFrame) -> pl.DataFrame:
     return (
         eval
         .select('preds')
-        # .with_row_index()
-        # .rename({'index': 'fold_number'})
-        # .with_columns(pl.col('fold_number') + 1)
+        .drop_nans()
+        .drop_nulls()
         .explode('preds')
     )
 
 
-def format_log_performance(x : float, th : float) -> str:
+def format_log_performance(x : float, th : float, is_percentage : bool = True) -> str:
     """Format logging performance to highlight good and bad performance"""
 
+    percentage_str : str = '%' if is_percentage else ''
+
     if x>th: # good performance in green
-        return f"{BOLD}{GREEN}{str(x)}%{RESET}"
+        return f"{BOLD}{GREEN}{str(x)}{percentage_str}{RESET}"
     else: # bad ones in red
-        return f"{BOLD}{RED}{str(x)}%{RESET}"
+        return f"{BOLD}{RED}{str(x)}{percentage_str}{RESET}"
     
 
-def log_performance_against(comparison : Dict[str, float], threshold : float):
+def log_performance_against(comparison : Dict[str, float], n_folds_threshold : int):
     """Print performance stats for comparing two experiments."""
 
     print(f"\n{BOLD}{BLUE}Relative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline){RESET}")
@@ -170,8 +172,19 @@ def log_performance_against(comparison : Dict[str, float], threshold : float):
 
     for row in comparison['fold_performances'].iter_rows():
         print(f'Fold {row[0]} Score Performance Experiment B vs A: {format_log_performance(row[1], 0)}')
-    print(f'Percentage of Folds Experiment B is Better then A: {format_log_performance(comparison['perc_of_folds_b_better_then_a'], threshold * 100)}\n')
+    print(f'Number of Folds Experiment B is Better then A: {format_log_performance(comparison['n_folds_better_performance'], comparison['n_folds'] - n_folds_threshold - 1, is_percentage = False)}\n')
 
     print(f'Mean % Overfitting Score Experiment B vs A: {format_log_performance(comparison['mean_cv_performance_overfitting'], 0)}')
     for row in comparison['fold_performances_overfitting'].iter_rows():
         print(f'\t - Fold {row[0]} % Overfitting Score Performance Experiment B vs A: {format_log_performance(row[1], 0)}')
+
+
+
+def retrieve_predictions_from_path(lab_name : str, experiment_id : int) -> pl.Expr:
+
+    expr = pl.read_parquet(f'./{lab_name}/predictions/predictions_{experiment_id}.parquet').to_series().alias(f'preds_{experiment_id}')
+    
+    if expr.shape[0] > 0:
+        return expr 
+    else:
+        return pl.lit(np.nan).alias(f'preds_{experiment_id}')
