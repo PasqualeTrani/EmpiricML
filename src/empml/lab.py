@@ -226,6 +226,7 @@ class Lab:
 
             if auto_mode:
                 self._update_best_experiment(experiment_ids=(compare_against, self.next_experiment_id))
+                logging.info(F"{BLUE}{BOLD}BEST EXPERIMENT UPDATED. THE NEW BEST EXPERIMENT IS {self.best_experiment}{RESET}")
 
         elif eval.shape[0]<self.n_folds:
             logging.info(f"{BOLD}{RED}Experiment arrested since comparison showed no improvement over baseline.{RESET}")
@@ -314,7 +315,8 @@ class Lab:
         eval_overfitting : bool = True, 
         store_preds : bool = True, 
         verbose : bool = True,
-        compare_against: int | None = None
+        compare_against: int | None = None, 
+        auto_mode : bool = False
     ):
         """Run multiple experiments with a single command."""
         logging.info(f'{BOLD}{BLUE}Total Number of Experiments to run: {len(pipelines)}{RESET}')
@@ -328,7 +330,8 @@ class Lab:
                     eval_overfitting=eval_overfitting, 
                     store_preds=store_preds,
                     verbose=verbose,
-                    compare_against=compare_against
+                    compare_against=compare_against, 
+                    auto_mode=auto_mode
                 )
 
 
@@ -583,7 +586,43 @@ class Lab:
             pvalue = (r+1)/(n_iters+1)  # empirical pvalue
 
             return pvalue
+        
+    def permutation_feature_importance(
+            self, 
+            pipeline : Pipeline, 
+            features : List[str],
+            n_iters : int = 5, 
+            verbose : bool = True      
+    ) -> pl.DataFrame:
+        """Compute for every single features the permutation feature importance."""
 
+        pfi_dfs = []
+        for fold, (train_idx, valid_idx) in enumerate(self.cv_indexes):
+
+            with log_step(f'Fold {fold+1}', verbose):
+
+                train = self.train.filter(pl.col(self.row_id).is_in(train_idx))
+                valid = self.train.filter(pl.col(self.row_id).is_in(valid_idx))
+
+                pipeline.fit(train)
+
+                valid = valid.with_columns(pl.Series(pipeline.predict(valid)).alias('base_preds'))
+
+                pfi = {}
+                for f in features:
+                    shadow = (
+                        valid
+                        .with_columns(pl.Series(pipeline.predict(valid.with_columns(pl.col(f).sample(fraction=1, seed=j, shuffle=True)))).alias(f'shadow_{j}') for j in range(n_iters))
+                    )
+
+                    base_metric = self.metric.compute_metric(shadow, target='prob_1', preds='base_preds')
+                    shadow_metric = np.array([self.metric.compute_metric(shadow, target=self.target, preds=f'shadow_{j}') for j in range(n_iters)]).mean()
+
+                    pfi[f] = relative_performance(minimize = False, x1=base_metric, x2=shadow_metric)
+
+                pfi_dfs.append(pl.DataFrame(pfi).with_columns(pl.lit(fold+1).alias('fold_number')))
+
+        return pl.concat(pfi_dfs)
     
 
     def save_check_point(self, check_point_name : str | None = None) -> None:
