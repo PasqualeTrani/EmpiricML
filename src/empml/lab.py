@@ -17,6 +17,8 @@ from empml.base import (
     CVGenerator
 )
 
+from empml.base import BaseTransformer
+from empml.errors import RunExperimentConfigException
 from empml.transformers import Identity
 from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
 from empml.estimators import RegressorWrapper, ClassifierWrapper
@@ -45,7 +47,28 @@ logging.basicConfig(
 
 @dataclass 
 class EvalParams:
-    n_folds_threshold : int
+    n_folds_threshold: int
+    pct_threshold: float | None = None
+    alpha: float | None = None 
+    n_iters: int | None = None
+    
+    def __post_init__(self):
+        has_pct = self.pct_threshold is not None
+        has_statistical = (self.alpha is not None) and (self.n_iters is not None)
+        
+        if not (has_pct or has_statistical):
+            raise ValueError(
+                "Must provide either 'pct_threshold' OR both 'alpha' and 'n_iters'"
+            )
+        
+        if has_pct and has_statistical:
+            raise ValueError(
+                "Cannot provide both 'pct_threshold' and ('alpha', 'n_iters'). "
+                "Choose one approach only."
+            )
+        
+        self.has_pct = has_pct 
+        self.has_statistical = has_statistical
 
 
 # ANSI escape codes for colors in print and logging 
@@ -94,11 +117,11 @@ class Lab:
         self.cv_indexes = self.cv_generator.split(self.train, self.row_id)
         self.n_folds = len(self.cv_indexes)
 
-        self.eval_params = eval_params
-        self.n_folds_threshold = eval_params.n_folds_threshold
+        # eval experiment parameters
+        self._set_eval_params(eval_params=eval_params)
                                                
         self.next_experiment_id = 1 
-        self.best_experiment = None
+        self._set_best_experiment()
 
     def _setup_directories(self):
         """Create lab directory structure."""
@@ -121,7 +144,26 @@ class Lab:
         self.results = create_results_schema()
         self.results_details = create_results_details_schema()
 
-    def _set_best_experiment(self, experiment_id : int):
+    def _set_eval_params(self, eval_params : EvalParams):
+        """Setup evaluation parameters for comparing experiments"""
+
+        self.n_folds_threshold = eval_params.n_folds_threshold
+        self.pct_threshold = eval_params.pct_threshold 
+        self.alpha = eval_params.alpha
+        self.n_iters = eval_params.n_iters
+
+        # percentage mode
+        if eval_params.has_pct:  
+            self.eval_has_pct = True
+            self.eval_has_statistical = False
+
+        # statistical test mode
+        else:  
+            self.eval_has_pct = False
+            self.eval_has_statistical = True
+
+
+    def _set_best_experiment(self, experiment_id : int | None = None):
         self.best_experiment = experiment_id
 
     # ------------------------------------------------------------------------------------------
@@ -134,9 +176,24 @@ class Lab:
         eval_overfitting : bool = True, 
         store_preds : bool = True, 
         verbose : bool = True,
-        compare_against: int | None = None
+        compare_against: int | None = None, 
+        auto_mode : bool = False
     ):
         """Run an experiment and save all the metrics."""
+        
+        # handling configuration errors for the experiment 
+        if auto_mode and not(self.best_experiment): 
+            raise RunExperimentConfigException(
+                """
+                Select a best experiment before using auto_mode to automatically update the best one.
+                You can use the internal _set_best_experiment method. 
+                """
+            )
+        
+        if auto_mode:
+            logging.info("Auto mode selected, thus compara_against parameter will be ignored and the current experiment will be compared against the best one.")
+            compare_against = self.best_experiment # redefinition of compare_against
+        
         
         eval = eval_pipeline_cv(
             pipeline=pipeline, 
@@ -165,7 +222,11 @@ class Lab:
         self._save_predictions(eval=eval)
 
         if compare_against and eval.shape[0] == self.n_folds:
-            self.compare_experiments(experiment_id_a = compare_against, experiment_id_b = self.next_experiment_id)
+            self._log_compare_experiments(experiment_ids=(compare_against, self.next_experiment_id))
+
+            if auto_mode:
+                self._update_best_experiment(experiment_ids=(compare_against, self.next_experiment_id))
+
         elif eval.shape[0]<self.n_folds:
             logging.info(f"{BOLD}{RED}Experiment arrested since comparison showed no improvement over baseline.{RESET}")
         else:
@@ -207,12 +268,41 @@ class Lab:
             compression_level=22
         )
 
-    def compare_experiments(self, experiment_id_a : int, experiment_id_b : int):
+    def _update_best_experiment(self, experiment_ids : Tuple[int, int]):
         """Compare results between two experiments"""
-        results_a = self.results_details.filter(pl.col('experiment_id')==experiment_id_a)
-        results_b = self.results_details.filter(pl.col('experiment_id')==experiment_id_b)
+        idx_a, idx_b = experiment_ids
+        results_a = self.results_details.filter(pl.col('experiment_id')==idx_a)
+        results_b = self.results_details.filter(pl.col('experiment_id')==idx_b)
         comparison = compare_results_stats(results_a, results_b, minimize = self.minimize)
-        log_performance_against(comparison = comparison, n_folds_threshold = self.eval_params.n_folds_threshold)
+
+        if self.eval_has_pct:
+            c1 = (comparison['mean_cv_performance'] > self.pct_threshold)
+            c2 = (comparison['n_folds_lower_performance']<=self.n_folds_threshold)
+            if  c1 and c2:
+                self.best_experiment = idx_b
+                logging.info('')
+            else: 
+                pass
+
+        else:
+            pvalue = self.compute_pvalue(experiment_ids=experiment_ids, n_iters=self.n_iters)
+            c1 = (comparison['mean_cv_performance'] > 0)
+            c2 = (comparison['n_folds_lower_performance']<=self.n_folds_threshold)
+            c3 = pvalue<self.alpha
+            if  c1 and c2 and c3:
+                self.best_experiment = idx_b
+            else: 
+                pass
+        
+
+
+    def _log_compare_experiments(self, experiment_ids : Tuple[int, int]):
+        """Compare results between two experiments"""
+        idx_a, idx_b = experiment_ids
+        results_a = self.results_details.filter(pl.col('experiment_id')==idx_a)
+        results_b = self.results_details.filter(pl.col('experiment_id')==idx_b)
+        comparison = compare_results_stats(results_a, results_b, minimize = self.minimize)
+        log_performance_against(comparison = comparison, n_folds_threshold = self.n_folds_threshold)
 
     # ------------------------------------------------------------------------------------------
     # MULTI-EXPERIMENTS
@@ -401,7 +491,7 @@ class Lab:
         features : List[str], 
         params_list : Dict[str, List[float | int | str]], 
         estimator : SKlearnEstimator, 
-        preprocessor : Pipeline | Identity = Identity(), 
+        preprocessor : Pipeline | BaseTransformer = Identity(), 
         eval_overfitting : bool = True, 
         store_preds : bool = True, 
         verbose : bool = True,
@@ -489,7 +579,8 @@ class Lab:
                 for i in range(n_iters)
             ]
 
-            pvalue = (np.array(sim_anomaly) > obs_anomaly).sum()/n_iters
+            r = (np.array(sim_anomaly) > obs_anomaly).sum() # number of times we found a result more "extreme" that the one we observed
+            pvalue = (r+1)/(n_iters+1)  # empirical pvalue
 
             return pvalue
 
