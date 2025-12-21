@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import uuid
 import os
 from datetime import datetime
@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from sklearn.base import BaseEstimator as SKlearnEstimator
 
 import polars as pl 
+import numpy as np
 
 from empml.base import (
     DataDownloader, 
@@ -29,7 +30,9 @@ from empml.lab_utils import (
     prepare_predictions_for_save, 
     log_performance_against, 
     retrieve_predictions_from_path, 
-    generate_params_list
+    generate_params_list, 
+    generate_shuffle_preds, 
+    compute_anomaly
 )
 
 # --- Logging Setup ---
@@ -460,6 +463,36 @@ class Lab:
         )
 
         return preds
+    
+
+    def compute_pvalue(self, experiment_ids : Tuple[int, int], n_iters : int = 200) -> float:
+
+        if not(isinstance(experiment_ids, tuple)):
+            raise ValueError('experiment_ids should be a tuple containing two and only two experiment ids.')
+        
+        elif len(experiment_ids)!=2:
+            raise ValueError('experiment_ids should be a tuple containing two and only two experiment ids.')
+        
+        else:
+            preds = self.retrieve_predictions(experiment_ids=list(experiment_ids))
+            idx_1, idx_2 = experiment_ids
+            obs_anomaly = compute_anomaly(metric=self.metric, lf=preds, preds_1=f'preds_{idx_1}', preds_2=f'preds_{idx_2}', target=self.target)
+
+            sim_anomaly = [
+                compute_anomaly(
+                    metric=self.metric, 
+                    lf=generate_shuffle_preds(lf=preds, preds_1=f'preds_{idx_1}', preds_2=f'preds_{idx_2}', random_state=i), 
+                    preds_1='shuffle_a', 
+                    preds_2='shuffle_b',
+                    target=self.target
+                ) 
+                for i in range(n_iters)
+            ]
+
+            pvalue = (np.array(sim_anomaly) > obs_anomaly).sum()/n_iters
+
+            return pvalue
+
     
 
     def save_check_point(self, check_point_name : str | None = None) -> None:

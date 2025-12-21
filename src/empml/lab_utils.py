@@ -5,6 +5,8 @@ from datetime import datetime
 import pytz
 from typing import Dict, List
 
+from empml.base import Metric
+
 # ANSI escape codes for colors in print and logging 
 RED = '\033[31m'
 GREEN = '\033[32m'
@@ -189,7 +191,11 @@ def retrieve_predictions_from_path(lab_name : str, experiment_id : int) -> pl.Ex
         return expr 
     else:
         return pl.lit(np.nan).alias(f'preds_{experiment_id}')
-    
+
+
+# ------------------------------------------------------------------------------------------
+# HPO
+# ------------------------------------------------------------------------------------------
 
 def generate_params_list(
     params_list : Dict[str, List[float | int | str]], 
@@ -215,3 +221,29 @@ def generate_params_list(
         raise ValueError("search_type argument should be 'grid' or 'random'")
 
     return [dict(row) for i, row in sample.iterrows()]
+
+
+# ------------------------------------------------------------------------------------------
+# Statistical tests
+# ------------------------------------------------------------------------------------------
+
+def generate_shuffle_preds(lf : pl.LazyFrame, preds_1 : str, preds_2 : str, random_state : int = 0) -> pl.LazyFrame:
+
+    transf_lz = (
+        lf
+        .with_columns(rand_seq = (pl.int_range(0, pl.len()).sample(fraction=1.0, with_replacement=True, seed=random_state) % 2))
+        .with_columns(
+            ((pl.col(preds_1) * pl.col('rand_seq')) + (pl.col(preds_2) * (1-pl.col('rand_seq')))).alias('shuffle_a'), 
+            ((pl.col(preds_2) * pl.col('rand_seq')) + (pl.col(preds_1) * (1-pl.col('rand_seq')))).alias('shuffle_b')
+        )
+    )
+
+    return transf_lz
+
+
+def compute_anomaly(metric : Metric, lf : pl.LazyFrame, preds_1 : str, preds_2 : str, target : str):
+
+    score_1 = metric.compute_metric(lf=lf, target=target, preds=preds_1)
+    score_2 = metric.compute_metric(lf=lf, target=target, preds=preds_2)
+
+    return abs(score_1-score_2)
