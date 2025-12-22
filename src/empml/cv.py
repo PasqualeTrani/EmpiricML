@@ -396,3 +396,65 @@ class TimeSeriesSplit(CVGenerator):
         ]
 
         return result
+    
+
+class TrainTestSplit(CVGenerator):
+    """
+    Single train-test split with random shuffling.
+    
+    Randomly shuffles data and splits it into training and test sets based on
+    the specified test size. Returns a single split similar to sklearn's 
+    train_test_split function.
+    
+    Parameters
+    ----------
+    test_size : float, default=0.2
+        Proportion of the dataset to include in the test split. Should be 
+        between 0.0 and 1.0.
+    random_state : int, optional
+        Random seed for reproducible shuffling. If None, shuffling is random.
+    
+    Examples
+    --------
+    >>> cv = TrainTestSplit(test_size=0.2, random_state=42)
+    >>> splits = cv.split(data, row_id='id')
+    >>> train_ids, test_ids = splits[0]
+    """
+
+    def __init__(self, test_size: float = 0.2, random_state: int = None):
+        if not 0.0 < test_size < 1.0:
+            raise ValueError(f"test_size must be between 0.0 and 1.0, got {test_size}")
+        self.test_size = test_size
+        self.random_state = random_state
+
+    def split(self, lf: pl.LazyFrame, row_id: str) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """
+        Generate single train/test split.
+        
+        Parameters
+        ----------
+        lf : pl.LazyFrame
+            Input data to split.
+        row_id : str
+            Column name containing unique row identifiers.
+        
+        Returns
+        -------
+        List[Tuple[np.ndarray, np.ndarray]]
+            Single-element list containing (train_indices, test_indices) tuple.
+        """
+        shuffle_df: pl.DataFrame = lf.collect().sample(
+            fraction=1, 
+            seed=self.random_state, 
+            shuffle=True
+        )
+        n_rows: int = shuffle_df.shape[0]
+        test_slice_size = int(n_rows * self.test_size)
+        
+        # Split into test and train
+        test_row_id = shuffle_df.slice(offset=0, length=test_slice_size)[row_id].to_numpy()
+        train_row_id = shuffle_df.slice(offset=test_slice_size, length=n_rows - test_slice_size)[row_id].to_numpy()
+        
+        result = [(train_row_id, test_row_id)]
+        
+        return result

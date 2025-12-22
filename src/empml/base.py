@@ -6,11 +6,11 @@ In this file there are all the base classes used in the other ones.
 from dataclasses import dataclass 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Protocol, Any
 
 # wranglers 
-import polars as pl # type:ignore
-import numpy as np # type:ignore
+import polars as pl 
+import numpy as np 
 
 # ------------------------------------------------------------------------------------------
 # Data Downloader 
@@ -85,3 +85,19 @@ class BaseEstimator(ABC):
     def predict(self, df : pl.LazyFrame):
         """Predict by using the fitted estimator."""
         pass
+
+
+# ------------------------------------------------------------------------------------------
+# SKlearn-like Estimator
+# ------------------------------------------------------------------------------------------
+
+class SKlearnEstimator(Protocol):
+    """Protocol for sklearn-like estimators."""
+    
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> Any:
+        """Fit the estimator."""
+        ...
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Make predictions."""
+        ...

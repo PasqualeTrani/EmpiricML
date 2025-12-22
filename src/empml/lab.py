@@ -6,9 +6,6 @@ import time
 import pickle 
 from dataclasses import dataclass 
 
-from sklearn.base import BaseEstimator as sklearn_estimator
-type SKlearnEstimator = sklearn_estimator
-
 import polars as pl 
 import numpy as np
 
@@ -18,11 +15,11 @@ from empml.base import (
     CVGenerator
 )
 
-from empml.base import BaseTransformer
+from empml.base import BaseTransformer, SKlearnEstimator
 from empml.errors import RunExperimentConfigException
 from empml.transformers import Identity
 from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
-from empml.estimators import RegressorWrapper, ClassifierWrapper
+from empml.estimators import EstimatorWrapper
 from empml.utils import log_execution_time, log_step
 from empml.lab_utils import (
     setup_row_id_column, 
@@ -401,8 +398,7 @@ class Lab:
                     ('scaler', StandardScaler()),
                     ('clf', mlp(hidden_layer_sizes = (64,32)))
                 ]),
-            }
-            wrapper_class = ClassifierWrapper  
+            }  
             
         else:
             # Regression imports
@@ -451,14 +447,14 @@ class Lab:
                     ('reg', mlp(hidden_layer_sizes = (64,32)))
                 ]),
             }
-            wrapper_class = RegressorWrapper
+    
 
         # Create pipelines
         if preprocess_pipe:
             pipes = [
                 Pipeline([
                     ('preprocess', preprocess_pipe),
-                    ('model', wrapper_class(estimator=estimator, features=features, target=self.target))
+                    ('model', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
                 ], 
                 name=name, 
                 description=f'{name} with features = {features}'
@@ -468,7 +464,7 @@ class Lab:
         else:
             pipes = [
                 Pipeline([
-                    ('model', wrapper_class(estimator=estimator, features=features, target=self.target))
+                    ('model', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
                 ], 
                 name=name, 
                 description=f'{name} with features = {features}'
@@ -509,7 +505,7 @@ class Lab:
         pipelines = [
                 Pipeline(steps=[
                 ('preprocessor', preprocessor), 
-                ('estimator', RegressorWrapper(estimator = estimator(**p), features=features, target=self.target))
+                ('estimator', EstimatorWrapper(estimator = estimator(**p), features=features, target=self.target))
             ], 
             name = f'{p}', 
             description = f'hpo with params = {p}'
@@ -559,7 +555,7 @@ class Lab:
         return preds
     
 
-    def compute_pvalue(self, experiment_ids : Tuple[int, int], n_iters : int = 200) -> float:
+    def compute_pvalue(self, experiment_ids : Tuple[int, int], n_iters : int = 200, extra_features: List[str] = []) -> float:
 
         if not(isinstance(experiment_ids, tuple)):
             raise ValueError('experiment_ids should be a tuple containing two and only two experiment ids.')
@@ -568,7 +564,7 @@ class Lab:
             raise ValueError('experiment_ids should be a tuple containing two and only two experiment ids.')
         
         else:
-            preds = self.retrieve_predictions(experiment_ids=list(experiment_ids))
+            preds = self.retrieve_predictions(experiment_ids=list(experiment_ids), extra_features=extra_features)
             idx_1, idx_2 = experiment_ids
             obs_anomaly = compute_anomaly(metric=self.metric, lf=preds, preds_1=f'preds_{idx_1}', preds_2=f'preds_{idx_2}', target=self.target)
 
@@ -638,7 +634,7 @@ class Lab:
 
         pipeline = Pipeline([
             ('preprocessor', preprocessor), 
-            ('estimator', RegressorWrapper(estimator=estimator, features=features, target=self.target))
+            ('estimator', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
         ])
 
         pfi = self.permutation_feature_importance(pipeline=pipeline, features=features, n_iters=n_iters, verbose=verbose)

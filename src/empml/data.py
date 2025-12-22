@@ -2,7 +2,7 @@
 from pathlib import Path
 
 # wranglers 
-import polars as pl  # type: ignore
+import polars as pl  
 
 # internal imports
 from empml.utils import log_execution_time
@@ -31,3 +31,13 @@ class ParquetDownloader(DataDownloader):
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
         return pl.scan_parquet(self.path) 
+    
+class ExcelDownloader(DataDownloader):
+    """Class for reading a Parquet file and returns a Polars LazyFrame."""
+    def __init__(self, path : str, sheet_name : str | None = None):
+        self.path = path
+        self.sheet_name = sheet_name
+        
+    @log_execution_time
+    def get_data(self) -> pl.LazyFrame:
+        return pl.read_excel(self.path, sheet_name = self.sheet_name).lazy()
