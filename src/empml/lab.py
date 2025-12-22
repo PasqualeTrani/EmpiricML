@@ -616,7 +616,7 @@ class Lab:
                         .with_columns(pl.Series(pipeline.predict(valid.with_columns(pl.col(f).sample(fraction=1, seed=j, shuffle=True)))).alias(f'shadow_{j}') for j in range(n_iters))
                     )
 
-                    base_metric = self.metric.compute_metric(shadow, target='prob_1', preds='base_preds')
+                    base_metric = self.metric.compute_metric(shadow, target=self.target, preds='base_preds')
                     shadow_metric = np.array([self.metric.compute_metric(shadow, target=self.target, preds=f'shadow_{j}') for j in range(n_iters)]).mean()
 
                     pfi[f] = relative_performance(minimize = not(self.minimize), x1=base_metric, x2=shadow_metric)
