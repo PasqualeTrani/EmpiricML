@@ -6,7 +6,8 @@ import time
 import pickle 
 from dataclasses import dataclass 
 
-from sklearn.base import BaseEstimator as SKlearnEstimator
+from sklearn.base import BaseEstimator as sklearn_estimator
+type SKlearnEstimator = sklearn_estimator
 
 import polars as pl 
 import numpy as np
@@ -618,11 +619,40 @@ class Lab:
                     base_metric = self.metric.compute_metric(shadow, target='prob_1', preds='base_preds')
                     shadow_metric = np.array([self.metric.compute_metric(shadow, target=self.target, preds=f'shadow_{j}') for j in range(n_iters)]).mean()
 
-                    pfi[f] = relative_performance(minimize = False, x1=base_metric, x2=shadow_metric)
+                    pfi[f] = relative_performance(minimize = not(self.minimize), x1=base_metric, x2=shadow_metric)
 
                 pfi_dfs.append(pl.DataFrame(pfi).with_columns(pl.lit(fold+1).alias('fold_number')))
 
         return pl.concat(pfi_dfs)
+    
+
+    def recursive_permutation_feature_selection(
+            self, 
+            estimator : SKlearnEstimator, 
+            features : List[str], 
+            preprocessor : Pipeline | BaseTransformer = Identity(), 
+            n_iters : int = 5, 
+            verbose : bool = True
+    ) -> List[str]:
+        """Recursive eliminator of useless or harmful features by using permutation feature importance."""
+
+        pipeline = Pipeline([
+            ('preprocessor', preprocessor), 
+            ('estimator', RegressorWrapper(estimator=estimator, features=features, target=self.target))
+        ])
+
+        pfi = self.permutation_feature_importance(pipeline=pipeline, features=features, n_iters=n_iters, verbose=verbose)
+        pfi_final = pfi.drop('fold_number').mean().transpose(include_header=True, header_name='features', column_names = ['pfi'])
+        features_to_drop = pfi_final.filter(pl.col('pfi')<=0)['features'].to_list()
+
+        if len(features_to_drop)>0:
+            new_features = [f for f in features if not(f in features_to_drop)]
+            logging.info(f"features eliminate = {features_to_drop}")
+            return self.recursive_permutation_feature_selection(preprocessor=preprocessor, estimator=estimator, features=new_features, n_iters=n_iters, verbose=verbose)
+
+        else:
+            logging.info("Nessuna features eliminata.")
+            return features 
     
 
     def save_check_point(self, check_point_name : str | None = None) -> None:
