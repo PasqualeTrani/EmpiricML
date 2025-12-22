@@ -1,9 +1,25 @@
+"""
+Pipeline orchestration and evaluation for machine learning experiments.
+
+This module provides the core Pipeline class for chaining transformers and estimators,
+along with comprehensive evaluation functions for assessing pipeline performance in 
+cross-validation settings. Designed to work exclusively with Polars LazyFrames.
+
+Key Components:
+- Pipeline: Flexible ML pipeline supporting transformer chains and optional final estimators
+- Single-fold evaluation: Train, predict, and score a pipeline on one fold
+- Cross-validation evaluation: Evaluate pipelines across multiple CV folds with early stopping
+- Performance comparison: Compare two pipeline experiments with detailed statistics
+
+Used by the Lab class for tracking and comparing ML experiments.
+"""
+
 # base imports 
 from typing import Union, Dict, List, Tuple
 
 # data wranglers 
-import polars as pl # type: ignore
-import numpy as np # type: ignore
+import polars as pl 
+import numpy as np 
 
 # internal imports 
 from empml.base import BaseTransformer, BaseEstimator, Metric # base classes 

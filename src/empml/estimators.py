@@ -1,6 +1,6 @@
-import polars as pl # type:ignore
-import numpy as np  # type:ignore
-from typing import List, Protocol, Any
+import polars as pl 
+import numpy as np  
+from typing import List
 from empml.base import BaseEstimator, SKlearnEstimator
 
 

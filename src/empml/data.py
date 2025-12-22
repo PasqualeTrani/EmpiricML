@@ -33,7 +33,7 @@ class ParquetDownloader(DataDownloader):
         return pl.scan_parquet(self.path) 
     
 class ExcelDownloader(DataDownloader):
-    """Class for reading a Parquet file and returns a Polars LazyFrame."""
+    """Class for reading an Excel file and returns a Polars LazyFrame."""
     def __init__(self, path : str, sheet_name : str | None = None):
         self.path = path
         self.sheet_name = sheet_name

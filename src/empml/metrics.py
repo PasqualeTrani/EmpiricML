@@ -165,3 +165,15 @@ class BalancedAccuracy(Metric):
         balanced_acc = (sensitivity + specificity) / 2
         
         return lf.select(balanced_acc).collect().item()
+    
+class ROCAUC(Metric):
+    """Area Under the ROC Curve for binary classification. Requires probability scores."""
+    
+    def compute_metric(self, lf: pl.LazyFrame, target: str, preds: str) -> float:
+        # Collect data and convert to numpy for sklearn computation
+        df = lf.select([pl.col(target), pl.col(preds)]).collect()
+        y_true = df[target].to_numpy()
+        y_scores = df[preds].to_numpy()
+        
+        from sklearn.metrics import roc_auc_score
+        return roc_auc_score(y_true, y_scores)
