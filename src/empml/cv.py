@@ -1,12 +1,15 @@
 from typing import List, Tuple
 
 # wranglers 
-import polars as pl # type:ignore
-import numpy as np # type:ignore
+import polars as pl 
+import numpy as np 
 import pandas as pd
 
 # internal imports 
 from empml.base import CVGenerator # base class 
+
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
 
 # ------------------------------------------------------------------------------------------
 # Implementations of the CVGenerator base class

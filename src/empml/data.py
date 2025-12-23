@@ -8,6 +8,8 @@ import polars as pl
 from empml.utils import log_execution_time
 from empml.base import DataDownloader # base class 
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
 
 # ------------------------------------------------------------------------------------------
 # Implementations of the DataDownloader base class

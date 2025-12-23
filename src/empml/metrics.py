@@ -12,6 +12,9 @@ import numpy as np
 # internal imports 
 from empml.base import Metric # base class 
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
+
 # ------------------------------------------------------------------------------------------
 # REGRESSION Implementations of Metric Class
 # ------------------------------------------------------------------------------------------

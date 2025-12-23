@@ -26,6 +26,8 @@ from empml.base import BaseTransformer, BaseEstimator, Metric # base classes
 from empml.utils import log_execution_time, log_step, time_execution
 from empml.lab_utils import format_experiment_details
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
     
 # ------------------------------------------------------------------------------------------
 # PIPELINE 

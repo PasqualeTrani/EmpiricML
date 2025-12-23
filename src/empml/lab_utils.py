@@ -15,6 +15,9 @@ from typing import Dict, List
 
 from empml.base import Metric
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
+
 # ANSI escape codes for colored terminal output
 RED = '\033[31m'
 GREEN = '\033[32m'

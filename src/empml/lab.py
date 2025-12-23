@@ -49,6 +49,8 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
 
 @dataclass 
 class EvalParams:

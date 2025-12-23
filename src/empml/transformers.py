@@ -15,6 +15,8 @@ import numpy as np
 # internal imports 
 from empml.base import BaseTransformer
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
 
 # ------------------------------------------------------------------------------------------
 # Identity

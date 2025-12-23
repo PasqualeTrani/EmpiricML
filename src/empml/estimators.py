@@ -3,6 +3,8 @@ import numpy as np
 from typing import List
 from empml.base import BaseEstimator, SKlearnEstimator
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
 
 class EstimatorWrapper(BaseEstimator):
     """

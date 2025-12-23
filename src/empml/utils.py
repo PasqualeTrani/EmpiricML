@@ -17,6 +17,9 @@ import polars as pl
 import numpy as np
 
 
+# streaming engine as the default for .collect()
+pl.Config.set_engine_affinity(engine='streaming')
+
 # --- Logging Setup ---
 logging.basicConfig(
     level=logging.INFO, 
