@@ -23,9 +23,15 @@ from empml.base import (
 )
 
 from empml.base import BaseTransformer, SKlearnEstimator
-from empml.errors import RunExperimentConfigException
+from empml.errors import RunExperimentConfigException, RunExperimentOnTestException
 from empml.transformers import Identity
-from empml.pipelines import Pipeline, eval_pipeline_cv, relative_performance, compare_results_stats
+from empml.pipelines import (
+    Pipeline, 
+    eval_pipeline_single_fold, 
+    eval_pipeline_cv,
+    relative_performance,
+    compare_results_stats
+)
 from empml.estimators import EstimatorWrapper
 from empml.utils import log_execution_time, log_step
 from empml.lab_utils import (
@@ -36,6 +42,7 @@ from empml.lab_utils import (
     format_experiment_details, 
     prepare_predictions_for_save, 
     log_performance_against, 
+    format_log_performance,
     retrieve_predictions_from_path, 
     generate_params_list, 
     generate_shuffle_preds, 
@@ -709,6 +716,44 @@ class Lab:
         else:
             logging.info("No features eliminated.")
             return features
+        
+    
+    def run_experiment_on_test(self, experiment_id : int, eval_overfitting : bool = True, store_preds : bool = True, verbose : bool = True):
+        """Compute performance metrics of a pipeline associated with an experiment on the test set."""
+
+        if not(self.test_downloader):
+            raise RunExperimentOnTestException('No test set detected. Please provide one through a downloader data class before final pipeline evaluation.')
+
+        path = f"./{self.name}/pipelines/pipeline_{experiment_id}.pkl"
+        pipe = pickle.load(open(path, 'rb'))
+
+        test_results = eval_pipeline_single_fold(
+            pipeline=pipe,
+            train=self.train, 
+            valid=self.test, 
+            metric=self.metric, 
+            target=self.target, 
+            minimize=self.minimize, 
+            eval_overfitting=eval_overfitting,
+            store_preds=store_preds,
+            verbose=verbose
+        )
+
+        cv_results = self.results.filter(pl.col('experiment_id')==experiment_id)
+
+        # computing stats 
+        relative_perf = relative_performance(minimize=self.minimize, x1=cv_results['cv_mean_score'].item(), x2=test_results['validation_score'])
+        print(f'Difference in performance CV vs Test: {format_log_performance(relative_perf, 0)}')
+
+        max_ = cv_results['cv_mean_score'].item() + 2 * cv_results['cv_std_score'].item()
+        min_ = cv_results['cv_mean_score'].item() - 2 * cv_results['cv_std_score'].item()
+        isin_interval = test_results['validation_score']>=min_ and test_results['validation_score']<max_
+        if isin_interval:
+            print(f'{BOLD}{GREEN} The test score is between μ ± 2σ, where μ and σ are the cv_mean_score and cv_std_score of the experiment on the cross-validation.{RESET}')
+        else:
+            print(f'{BOLD}{RED} The test score is NOT between μ ± 2σ, where μ and σ are the cv_mean_score and cv_std_score of the experiment on the cross-validation. {RESET}')
+
+        return test_results
 
     def save_check_point(self, check_point_name : str | None = None) -> None:
         """Serialize current lab state to disk."""

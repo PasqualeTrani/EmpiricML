@@ -77,7 +77,3 @@ class EstimatorWrapper(BaseEstimator):
         """
         X = lf.select(self.features).collect().to_numpy()
         return self.estimator.predict_proba(X)
-    
-    def __getattr__(self, name):
-        """Delegate attribute access to the wrapped estimator."""
-        return getattr(self.estimator, name)
