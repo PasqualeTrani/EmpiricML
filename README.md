@@ -5,7 +5,7 @@ It's built on top of two great libraries: scikit-learn and Polars.
 
 ## The Core Idea 
 
-As the name suggests, the core idea behind the library is that **Machine Learning is an empirical science**. You have a hypothesis—for example, adding a feature to the model will increase performance according to some metric—and you need to test it. In empirical sciences, testing hypotheses requires designing **experiments**, which in turn requires a **laboratory** with all the equipment you need. **That's precisely the goal of EmpiricML: providing you with a laboratory containing all the equipment you need to run experiments for Machine Learning problems**. Specifically, this equipment includes:
+As the name suggests, the core idea behind the library is that **Machine Learning is an empirical science**. You have a hypothesis - for example, adding a feature to the model will increase performance according to some metric - and you need to test it. In empirical sciences, testing hypotheses requires designing **experiments**, which in turn requires a **laboratory** with all the equipment you need. **That's precisely the goal of EmpiricML: providing you with a laboratory containing all the equipment you need to run experiments for Machine Learning problems**. Specifically, this equipment includes:
 
 - Train and test data 
 - A cross-validation strategy to divide the training data into multiple train-validation samples for more reliable performance estimates
