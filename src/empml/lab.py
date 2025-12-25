@@ -25,7 +25,7 @@ from empml.base import (
 from empml.base import BaseTransformer, SKlearnEstimator
 from empml.errors import RunExperimentConfigException, RunExperimentOnTestException
 from empml.transformers import Identity
-from empml.pipelines import (
+from empml.pipeline import (
     Pipeline, 
     eval_pipeline_single_fold, 
     eval_pipeline_cv,

@@ -792,25 +792,64 @@ class SkewTargetEncoder(BaseTransformer):
 class OrdinalEncoder(BaseTransformer):
     """Encode categorical features with ordinal integers based on sorted order."""
     
-    def __init__(self, features: List[str]):
+    def __init__(
+        self, 
+        features: List[str],
+        suffix: str = '_ordinal_encoded',
+        replace_original: bool = False
+    ):
         """
         Args:
             features: Categorical columns to encode
+            suffix: Suffix for encoded column names (default: '_ordinal_encoded')
+            replace_original: If True, drop original columns and use their names 
+                            for encoded columns, ignoring suffix (default: False)
         """
         self.features = features
+        self.suffix = suffix
+        self.replace_original = replace_original
+        
+        # Handle empty suffix configuration
+        if not self.replace_original and self.suffix == '':
+            warnings.warn(
+                "suffix='' with replace_original=False would create duplicate "
+                "column names. Setting replace_original=True automatically.",
+                UserWarning,
+                stacklevel=2
+            )
+            self.replace_original = True
+        
+        if self.replace_original and self.suffix == '':
+            warnings.warn(
+                "replace_original=True with suffix='' would cause errors. "
+                "Setting suffix='_ordinal_encoded' for internal processing.",
+                UserWarning,
+                stacklevel=2
+            )
+            self.suffix = '_ordinal_encoded'
+        
+        # Warn if suffix is set but will be ignored
+        if self.replace_original and self.suffix != '_ordinal_encoded':
+            warnings.warn(
+                "replace_original=True: suffix argument is ignored. "
+                "Encoded columns will use original column names.",
+                UserWarning,
+                stacklevel=2
+            )
 
     def fit(self, X: pl.LazyFrame):
         """Learn ordinal mapping from sorted unique values."""
         self.encoding_dict: Dict[str, pl.LazyFrame] = {}
         
         for f in self.features:
+            temp_col_name = f'{f}{self.suffix}'
             # Get sorted unique values and assign sequential integers
             unique_values = (
                 X.select(f)
                 .filter(pl.col(f).is_not_null())
                 .unique()
                 .sort(f)
-                .with_row_index(name=f'{f}_ordinal_encoded')
+                .with_row_index(name=temp_col_name)
             )
             self.encoding_dict[f] = unique_values
         
@@ -821,6 +860,7 @@ class OrdinalEncoder(BaseTransformer):
         transf_X = X.clone()
         
         for f in self.features:
+            temp_col_name = f'{f}{self.suffix}'
             # Join encoding dictionary
             transf_X = transf_X.join(self.encoding_dict[f], how='left', on=f)
             
@@ -828,11 +868,20 @@ class OrdinalEncoder(BaseTransformer):
             transf_X = transf_X.with_columns(
                 pl.when(pl.col(f).is_null())
                 .then(pl.lit(-99))  # Null values
-                .when(pl.col(f'{f}_ordinal_encoded').is_null())
+                .when(pl.col(temp_col_name).is_null())
                 .then(pl.lit(-9999))  # Unknown categories
-                .otherwise(pl.col(f'{f}_ordinal_encoded'))
-                .alias(f'{f}_ordinal_encoded')
+                .otherwise(pl.col(temp_col_name))
+                .alias(temp_col_name)
             )
+        
+        # If replacing originals, drop them and rename encoded columns
+        if self.replace_original:
+            transf_X = transf_X.drop(self.features)
+            rename_mapping = {
+                f'{f}{self.suffix}': f 
+                for f in self.features
+            }
+            transf_X = transf_X.rename(rename_mapping)
         
         return transf_X
 
@@ -904,13 +953,14 @@ class DummyEncoder(BaseTransformer):
 class StandardScaler(BaseTransformer):
     """Standardize features by removing mean and scaling to unit variance."""
     
-    def __init__(self, features: List[str], new_features_suffix: str = ''):
+    def __init__(self, features: List[str], suffix: str = ''):
         """
         Args:
             features: Columns to standardize
+            suffix: Suffix for scaled column names (default: '')
         """
         self.features = features
-        self.new_features_suffix = new_features_suffix
+        self.suffix = suffix
 
     def fit(self, X: pl.LazyFrame):
         """Compute mean and std for each feature."""
@@ -920,39 +970,33 @@ class StandardScaler(BaseTransformer):
             pl.col(f).std().alias(f'{f}_std') for f in self.features
         ])
         
-        self.stats = stats
+        self.stats : pl.DataFrame = stats.collect()
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Apply z-score normalization: (x - mean) / std."""
-        transf_X = X.clone()
-        
-        # Broadcast stats to all rows via cross join
-        transf_X = transf_X.join(self.stats, how='cross')
         
         # Standardize each feature
         for f in self.features:
-            transf_X = transf_X.with_columns(
-                ((pl.col(f) - pl.col(f'{f}_mean')) / pl.col(f'{f}_std'))
-                .alias(f'{f}_standard_scaled')
+            X = X.with_columns(
+                ((pl.col(f) - self.stats[f'{f}_mean'].item()) / self.stats[f'{f}_std'].item())
+                .alias(f'{f}{self.suffix}')
             )
         
-        # Remove temporary stats columns
-        cols_to_drop = [f'{f}_mean' for f in self.features] + [f'{f}_std' for f in self.features]
-        transf_X = transf_X.drop(cols_to_drop)
-        
-        return transf_X
+        return X
 
 
 class MinMaxScaler(BaseTransformer):
     """Scale features to [0, 1] range using min-max normalization."""
     
-    def __init__(self, features: List[str]):
+    def __init__(self, features: List[str], suffix: str = ''):
         """
         Args:
             features: Columns to scale
+            suffix: Suffix for scaled column names (default: '')
         """
         self.features = features
+        self.suffix = suffix 
 
     def fit(self, X: pl.LazyFrame):
         """Compute min and max for each feature."""
@@ -962,28 +1006,20 @@ class MinMaxScaler(BaseTransformer):
             pl.col(f).max().alias(f'{f}_max') for f in self.features
         ])
         
-        self.stats = stats
+        self.stats : pl.DataFrame = stats.collect()
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Apply min-max scaling: (x - min) / (max - min)."""
-        transf_X = X.clone()
-        
-        # Broadcast stats to all rows via cross join
-        transf_X = transf_X.join(self.stats, how='cross')
         
         # Scale each feature
         for f in self.features:
-            transf_X = transf_X.with_columns(
-                ((pl.col(f) - pl.col(f'{f}_min')) / (pl.col(f'{f}_max') - pl.col(f'{f}_min')))
-                .alias(f'{f}_minmax_scaled')
+            X = X.with_columns(
+                ((pl.col(f) - self.stats[f'{f}_min'].item()) / (self.stats[f'{f}_max'].item()) - (self.stats[f'{f}_min'].item()))
+                .alias(f'{f}{self.suffix}')
             )
         
-        # Remove temporary stats columns
-        cols_to_drop = [f'{f}_min' for f in self.features] + [f'{f}_max' for f in self.features]
-        transf_X = transf_X.drop(cols_to_drop)
-        
-        return transf_X
+        return X
     
 
 
@@ -994,55 +1030,55 @@ class MinMaxScaler(BaseTransformer):
 class Log1pFeatures(BaseTransformer):
     """Apply log(1+x) transformation to features."""
     
-    def __init__(self, features: List[str], new_features_suffix: str = ''):
+    def __init__(self, features: List[str], suffix: str = ''):
         """
         Args:
             features: Columns to transform
-            new_features_suffix: Suffix for output column names
+            suffix: Suffix for output column names
         """
         self.features = features
-        self.new_feature_suffix = new_features_suffix
+        self.suffix = suffix
 
     def fit(self, X: pl.LazyFrame):
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Apply log(x+1) transformation."""
-        return X.with_columns((pl.col(f)+1).log().alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+        return X.with_columns((pl.col(f)+1).log().alias(f'{f}{self.suffix}') for f in self.features)
     
 
 class Expm1Features(BaseTransformer):
     """Apply exp(x-1) transformation to features."""
     
-    def __init__(self, features: List[str], new_features_suffix: str = ''):
+    def __init__(self, features: List[str], suffix: str = ''):
         """
         Args:
             features: Columns to transform
-            new_features_suffix: Suffix for output column names
+            suffix: Suffix for output column names
         """
         self.features = features
-        self.new_feature_suffix = new_features_suffix
+        self.suffix = suffix
 
     def fit(self, X: pl.LazyFrame):
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Apply exp(x-1) transformation."""
-        return X.with_columns((pl.col(f)-1).exp().alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+        return X.with_columns((pl.col(f)-1).exp().alias(f'{f}{self.suffix}') for f in self.features)
     
 
 class PowerFeatures(BaseTransformer):
     """Apply power transformation to features."""
     
-    def __init__(self, features: List[str], new_features_suffix: str = '', power: float = 2):
+    def __init__(self, features: List[str], suffix: str = '', power: float = 2):
         """
         Args:
             features: Columns to transform
-            new_features_suffix: Suffix for output column names
+            suffix: Suffix for output column names
             power: Exponent for power transformation
         """
         self.features = features
-        self.new_feature_suffix = new_features_suffix
+        self.suffix = suffix
         self.power = power
 
     def fit(self, X: pl.LazyFrame):
@@ -1050,27 +1086,27 @@ class PowerFeatures(BaseTransformer):
     
     def transform(self, X: pl.LazyFrame):
         """Raise features to specified power."""
-        return X.with_columns((pl.col(f)).pow(self.power).alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+        return X.with_columns((pl.col(f)).pow(self.power).alias(f'{f}{self.suffix}') for f in self.features)
     
 
 class InverseFeatures(BaseTransformer):
     """Apply inverse (1/x) transformation to features."""
     
-    def __init__(self, features: List[str], new_features_suffix: str = ''):
+    def __init__(self, features: List[str], suffix: str = ''):
         """
         Args:
             features: Columns to transform
-            new_features_suffix: Suffix for output column names
+            suffix: Suffix for output column names
         """
         self.features = features
-        self.new_feature_suffix = new_features_suffix
+        self.suffix = suffix
 
     def fit(self, X: pl.LazyFrame):
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Compute 1/x for each feature."""
-        return X.with_columns((1/pl.col(f)).alias(f'{f}_{self.new_feature_suffix}') for f in self.features)
+        return X.with_columns((1/pl.col(f)).alias(f'{f}{self.suffix}') for f in self.features)
 
 
 
