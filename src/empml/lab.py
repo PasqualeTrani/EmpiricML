@@ -547,8 +547,8 @@ class Lab:
                 ('preprocessor', preprocessor), 
                 ('estimator', EstimatorWrapper(estimator=estimator(**p), features=features, target=self.target))
             ], 
-            name=f'{p}', 
-            description=f'hpo with params = {p}'
+            name=f'{repr(estimator(**p))}', 
+            description=f'{repr(estimator(**p))} with features={features} and preprocessor={repr(preprocessor)}'
             )
             for p in generate_params_list(
                 params_list=params_list, 
@@ -558,6 +558,8 @@ class Lab:
             )
         ]
 
+        number_of_experiments = len(pipelines) # if search_type='random', number_of_experiments=num_samples 
+
         self.multi_run_experiment(
             pipelines=pipelines, 
             eval_overfitting=eval_overfitting, 
@@ -565,6 +567,12 @@ class Lab:
             verbose=verbose, 
             compare_against=compare_against
         )
+
+        # select best result of the hpo 
+        hpo_results = self.results.tail(number_of_experiments).sort('cv_mean_score', descending=self.minimize).tail(1).row(0, named=True)
+        hpo_results['best_pipeline'] = self.retrieve_pipeline(experiment_id = hpo_results['experiment_id'])
+
+        return hpo_results
 
     # ------------------------------------------------------------------------------------------
     # RETRIEVE PIPELINE PREDICTIONS
@@ -754,6 +762,16 @@ class Lab:
             print(f'{BOLD}{RED} The test score is NOT between μ ± 2σ, where μ and σ are the cv_mean_score and cv_std_score of the experiment on the cross-validation. {RESET}')
 
         return test_results
+
+
+    def retrieve_pipeline(self, experiment_id : int) -> Pipeline:
+        """Retrieve a pipeline related to an experiment"""
+        path = f'./{self.name}/pipelines/pipeline_{experiment_id}.pkl'
+        return pickle.load(open(path, 'rb'))
+    
+    def show_best_score(self) -> pl.DataFrame:
+        """Show the stats related to the experiment with the best cv_mean_score"""
+        return self.results.sort('cv_mean_score', descending=self.minimize).tail(1)
 
     def save_check_point(self, check_point_name : str | None = None) -> None:
         """Serialize current lab state to disk."""

@@ -72,6 +72,20 @@ class BaseTransformer(ABC):
         self.fit(lf)
         return self.transform(lf)
     
+    def __repr__(self):
+        """Return a string representation showing class name and key attributes."""
+        class_name = self.__class__.__name__
+        
+        # Get all instance attributes except private ones
+        attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        
+        if not attrs:
+            return f"{class_name}()"
+        
+        # Format attributes
+        attrs_str = ", ".join([f"{k}={v!r}" for k, v in attrs.items()])
+        return f"{class_name}({attrs_str})"
+    
 
 # ------------------------------------------------------------------------------------------
 # Estimator

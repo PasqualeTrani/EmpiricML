@@ -260,7 +260,7 @@ class Pipeline:
         return len(self.steps)
     
     def __repr__(self):
-        steps_str = ",\n    ".join([f"('{name}', {step.__class__.__name__})" for name, step in self.steps])
+        steps_str = ",\n    ".join([f"('{name}', {step!r})" for name, step in self.steps])
         pipeline_type = "transformer-only" if self._is_transformer_only else "with estimator"
         return f"Pipeline({pipeline_type})[\n    {steps_str}\n]"
     

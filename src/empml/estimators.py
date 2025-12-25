@@ -77,3 +77,8 @@ class EstimatorWrapper(BaseEstimator):
         """
         X = lf.select(self.features).collect().to_numpy()
         return self.estimator.predict_proba(X)
+    
+    def __repr__(self):
+        """Return a string representation showing the wrapped estimator and key parameters."""
+        estimator_repr = repr(self.estimator)
+        return f"EstimatorWrapper({estimator_repr}, features={self.features!r}, target={self.target!r})"
