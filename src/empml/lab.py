@@ -53,7 +53,8 @@ from empml.lab_utils import (
 import logging 
 logging.basicConfig(
     level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    force=True 
 )
 
 # streaming engine as the default for .collect()
