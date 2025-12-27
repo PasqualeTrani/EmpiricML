@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="EmpiricML-logo.png" width="100%" alt="EmpiricML Logo">
+  <img src="EmpiricML-logo.png" style="width:100%; max-height:200px; object-fit: contain;" alt="EmpiricML Logo">
 </p>
 
 # EmpiricML
