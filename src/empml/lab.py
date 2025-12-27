@@ -772,7 +772,7 @@ class Lab:
     
     def show_best_score(self) -> pl.DataFrame:
         """Show the stats related to the experiment with the best cv_mean_score"""
-        return self.results.sort('cv_mean_score', descending=self.minimize).tail(1)
+        return self.results.filter(pl.col('is_completed') == True).sort('cv_mean_score', descending=self.minimize).tail(1)
 
     def save_check_point(self, check_point_name : str | None = None) -> None:
         """Serialize current lab state to disk."""

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="EmpiricML-logo.png" width="600" alt="EmpiricML Logo">
+</p>
+
 # EmpiricML
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
@@ -6,13 +10,13 @@
 
 > **Science, not Alchemy.** Build reliable ML models on tabular data with the rigour of an empirical science.
 
-EmpiricML is a Python framework designed to make building, testing, and tracking machine learning models on **tabular data** faster, easier, and most importantly, **robust**. Built on the shoulders of giants—**scikit-learn** and **Polars**—it brings the concept of a scientific "Laboratory" to your ML workflow.
+EmpiricML is a Python framework designed to make building, testing, and tracking machine learning models on **tabular data** faster, easier, and most importantly, **robust**. Built on the shoulders of giants - **scikit-learn** and **Polars** - it brings the concept of a scientific "Laboratory" to your ML workflow.
 
 ---
 
-## 🧪 The Philosophy: The Laboratory
-
-In empirical sciences, you don't just "try things"; you design **experiments** to test hypotheses. To do that effectively, you need a controlled environment—a **Laboratory**.
+## The Core Idea
+The core idea behind the framework is that **Machine Learning is an empirical science**.
+In empirical sciences, you don't just "try things"; you design **experiments** to test hypotheses. To do that effectively, you need a controlled environment, i.e. a **Laboratory**.
 
 **EmpiricML provides that Laboratory.**
 
@@ -22,52 +26,26 @@ Instead of scattered scripts and notebooks, the `Lab` class encapsulates everyth
 *   **Measurement**: A specific Error or Performance Metric.
 *   **Criteria**: Rules for statistical comparison to determine if Model A is *truly* better than Model B.
 
-## ✨ Key Features
+## Key Features
 
-*   **⚡ Polars Integration**: Pipelines work with Polars LazyFrames for high-performance data processing.
-*   **📊 Automated CV Evaluation**: Every experiment is rigorously cross-validated.
-*   **⚖️ Statistical Comparison**: Don't guess. Use permutation tests and statistical thresholds to compare models.
-*   **📝 Automated Tracking**: Logs results, predictions, and pipeline configurations automatically.
-*   **🛑 Early Stopping**: Aborts unpromising experiments early to save compute resources.
-*   **🔄 Auto Mode**: Automatically tracks and persists the best-performing experiment.
-*   **🔍 Hyperparameter Optimization**: Built-in support for Grid and Random search.
-*   **🧹 Feature Selection**: Permutation importance with recursive elimination.
-*   **💾 Checkpointing**: Save/Restore your `Lab` state to pause and resume work seamlessly.
+*   ** Polars Integration**: Pipelines work with Polars LazyFrames for high-performance data processing.
+*   ** Automated CV Evaluation**: Every experiment is rigorously cross-validated.
+*   ** Statistical Comparison**: Don't guess. Use permutation tests and statistical thresholds to compare models.
+*   ** Automated Tracking**: Logs results, predictions, and pipeline configurations automatically.
+*   ** Early Stopping**: Aborts unpromising experiments early to save compute resources.
+*   ** Auto Mode**: Automatically tracks and persists the best-performing experiment.
+*   ** Hyperparameter Optimization**: Built-in support for Grid and Random search.
+*   ** Feature Selection**: Permutation importance with recursive elimination.
+*   ** Checkpointing**: Save/Restore your `Lab` state to pause and resume work seamlessly.
 
-## 🛠️ Architecture
 
-```mermaid
-classDiagram
-    class Lab {
-        +TrainData
-        +TestData
-        +Metric
-        +CV_Strategy
-        +run_experiment(pipeline)
-        +compare_experiments()
-    }
-    class Pipeline {
-        +Transformers
-        +Estimator
-    }
-    class ExperimentResult {
-        +CV_Scores
-        +Predictions
-        +TrainingTime
-    }
-
-    Lab --> Pipeline : Executes
-    Lab --> ExperimentResult : Produces
-    Pipeline ..> Polars : Uses LazyFrames
-```
-
-## 📦 Installation
+## Installation
 
 ```bash
-pip install empml
+pip install empiricml
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Initialize your Laboratory
 
@@ -133,7 +111,43 @@ pipe = Pipeline(
 lab.run_experiment(pipeline=pipe)
 ```
 
-## 📂 Project Structure
+### 3. Hyperparameter Optimization
+
+EmpiricML simplifies hyperparameter tuning with built-in Grid and Random Search capabilities. This allows you to systematically explore different model configurations.
+
+```python
+from sklearn.tree import DecisionTreeRegressor
+
+# Define the parameter grid
+params = {
+    'max_depth': [3, 5, 10],
+    'min_samples_split': [2, 5, 10]
+}
+
+# Run Hyperparameter Optimization
+# Note: Pass the estimator class (not an instance) to the hpo method
+best_result_row = lab.hpo(
+    features=features,
+    params_list=params,
+    estimator=DecisionTreeRegressor, 
+    search_type='grid',              # Options: 'grid' or 'random'
+    verbose=True
+)
+```
+
+### 4. Accessing Experiment Results
+
+All experiment tracking data, including results from single runs and HPO, is stored in the `lab.results` DataFrame. This Polars DataFrame contains metrics, execution times, and metadata for every experiment run in the session.
+
+```python
+# View all experiment results as a Polars DataFrame
+lab.results
+
+# Get the best performing experiment stats
+lab.show_best_score()
+```
+
+## Project Structure
 
 The library is organized into logical modules found in `src/empml`:
 
@@ -145,7 +159,7 @@ The library is organized into logical modules found in `src/empml`:
 *   `data`: Tools for handling data loading and downloads.
 *   `cv`: Cross-validation splitters.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please check out the issues or submit a PR.
 
@@ -155,7 +169,7 @@ Contributions are welcome! Please check out the issues or submit a PR.
 4.  Push to the branch (`git push origin feature/new-feature`)
 5.  Open a Pull Request
 
-## 📄 Citation
+## Citation
 
 If you use EmpiricML in your research, please cite:
 
@@ -168,6 +182,6 @@ If you use EmpiricML in your research, please cite:
 }
 ```
 
-## 📜 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
