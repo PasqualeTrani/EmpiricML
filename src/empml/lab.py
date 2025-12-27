@@ -32,7 +32,7 @@ from empml.pipeline import (
     relative_performance,
     compare_results_stats
 )
-from empml.estimators import EstimatorWrapper
+from empml.wrappers import SKlearnWrapper
 from empml.utils import log_execution_time, log_step
 from empml.lab_utils import (
     setup_row_id_column, 
@@ -487,7 +487,7 @@ class Lab:
             pipes = [
                 Pipeline([
                     ('preprocess', preprocess_pipe),
-                    ('model', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
+                    ('model', SKlearnWrapper(estimator=estimator, features=features, target=self.target))
                 ], 
                 name=name, 
                 description=f'{name} with features = {features}'
@@ -497,7 +497,7 @@ class Lab:
         else:
             pipes = [
                 Pipeline([
-                    ('model', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
+                    ('model', SKlearnWrapper(estimator=estimator, features=features, target=self.target))
                 ], 
                 name=name, 
                 description=f'{name} with features = {features}'
@@ -546,7 +546,7 @@ class Lab:
         pipelines = [
             Pipeline(steps=[
                 ('preprocessor', preprocessor), 
-                ('estimator', EstimatorWrapper(estimator=estimator(**p), features=features, target=self.target))
+                ('estimator', SKlearnWrapper(estimator=estimator(**p), features=features, target=self.target))
             ], 
             name=f'{repr(estimator(**p))}', 
             description=f'{repr(estimator(**p))} with features={features} and preprocessor={repr(preprocessor)}'
@@ -705,7 +705,7 @@ class Lab:
         """
         pipeline = Pipeline([
             ('preprocessor', preprocessor), 
-            ('estimator', EstimatorWrapper(estimator=estimator, features=features, target=self.target))
+            ('estimator', SKlearnWrapper(estimator=estimator, features=features, target=self.target))
         ])
 
         pfi = self.permutation_feature_importance(pipeline=pipeline, features=features, n_iters=n_iters, verbose=verbose)
