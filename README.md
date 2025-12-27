@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="EmpiricML-logo.png" width="600" alt="EmpiricML Logo">
+  <img src="EmpiricML-logo.png" width="250" alt="EmpiricML Logo">
 </p>
 
 # EmpiricML
@@ -28,15 +28,15 @@ Instead of scattered scripts and notebooks, the `Lab` class encapsulates everyth
 
 ## Key Features
 
-*   ** Polars Integration**: Pipelines work with Polars LazyFrames for high-performance data processing.
-*   ** Automated CV Evaluation**: Every experiment is rigorously cross-validated.
-*   ** Statistical Comparison**: Don't guess. Use permutation tests and statistical thresholds to compare models.
-*   ** Automated Tracking**: Logs results, predictions, and pipeline configurations automatically.
-*   ** Early Stopping**: Aborts unpromising experiments early to save compute resources.
-*   ** Auto Mode**: Automatically tracks and persists the best-performing experiment.
-*   ** Hyperparameter Optimization**: Built-in support for Grid and Random search.
-*   ** Feature Selection**: Permutation importance with recursive elimination.
-*   ** Checkpointing**: Save/Restore your `Lab` state to pause and resume work seamlessly.
+*   `Polars Integration`: Pipelines work with Polars LazyFrames for high-performance data processing.
+*   `Automated CV Evaluation`: Every experiment is rigorously cross-validated.
+*   `Statistical Comparison`: Don't guess. Use permutation tests and statistical thresholds to compare models.
+*   `Automated Tracking`: Logs results, predictions, and pipeline configurations automatically.
+*   `Early Stopping`: Aborts unpromising experiments early to save compute resources.
+*   `Auto Mode`: Automatically tracks and persists the best-performing experiment.
+*   `Hyperparameter Optimization`: Built-in support for Grid and Random search.
+*   `Feature Selection`: Permutation importance with recursive elimination.
+*   `Checkpointing`: Save/Restore your `Lab` state to pause and resume work seamlessly.
 
 
 ## Installation
@@ -95,7 +95,7 @@ features = ['sqft_living', 'sqft_lot', 'bedrooms', 'bathrooms']
 pipe = Pipeline(
     steps = [
         # Feature Engineering: Apply Log1p to numerical features
-        ('log_scale', Log1pFeatures(features=features, new_features_suffix='')),
+        ('log_scale', Log1pFeatures(features=features, suffix='')),
         # Modeling: Wrap sklearn-compatible estimators
         ('model', SKlearnWrapper(
             estimator=LGBMRegressor(verbose=-1), 
