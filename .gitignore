@@ -74,6 +74,3 @@ config/*.local.json
 
 # notebooks 
 notebooks/
-
-# images 
-*.png
