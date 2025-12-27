@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="EmpiricML-logo.png" width="200" alt="EmpiricML Logo">
+  <img src="EmpiricML-logo.png" width="100%" alt="EmpiricML Logo">
 </p>
 
 # EmpiricML
 
-![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-active-success)
 
