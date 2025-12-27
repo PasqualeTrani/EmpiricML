@@ -69,11 +69,11 @@ config/*.local.json
 .env
 
 # data_files 
-.csv
-.parquet
+*.csv
+*.parquet
 
 # notebooks 
 notebooks/
 
 # images 
-.png
+*.png
