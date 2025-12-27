@@ -1,113 +1,161 @@
 # EmpiricML
 
-EmpiricML is a Python framework for building **robust** machine learning models on **tabular** data **faster** and **easier**.
-It's built on top of two great libraries: scikit-learn and Polars.
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-active-success)
 
-## The Core Idea 
+> **Science, not Alchemy.** Build reliable ML models on tabular data with the rigour of an empirical science.
 
-As the name suggests, the core idea behind the library is that **Machine Learning is an empirical science**. You have a hypothesis - for example, adding a feature to the model will increase performance according to some metric - and you need to test it. In empirical sciences, testing hypotheses requires designing **experiments**, which in turn requires a **laboratory** with all the equipment you need. **That's precisely the goal of EmpiricML: providing you with a laboratory containing all the equipment you need to run experiments for Machine Learning problems**. Specifically, this equipment includes:
+EmpiricML is a Python framework designed to make building, testing, and tracking machine learning models on **tabular data** faster, easier, and most importantly, **robust**. Built on the shoulders of giants—**scikit-learn** and **Polars**—it brings the concept of a scientific "Laboratory" to your ML workflow.
 
-- Train and test data 
-- A cross-validation strategy to divide the training data into multiple train-validation samples for more reliable performance estimates
-- An error or performance metric to quantify model quality
-- Rules to establish when one model is clearly better than another
+---
 
-All these elements are stored in an instance of the **Lab** class, the main component of the framework. 
+## 🧪 The Philosophy: The Laboratory
 
-## Key Features of Lab Class and EmpiricML API
+In empirical sciences, you don't just "try things"; you design **experiments** to test hypotheses. To do that effectively, you need a controlled environment—a **Laboratory**.
 
-In addition to storing all the items you need to run experiments, the Lab class allows you to:
+**EmpiricML provides that Laboratory.**
 
-- **Automated CV Evaluation**: Run experiments with cross-validation and compute statistics like mean CV score, mean train time in seconds, etc.
-- **Statistical Comparison**: Compare experiment results using percentage thresholds or permutation tests
-- **Experiment Tracking**: Automatically log results, predictions, and pipelines related to an experiment
-- **Early Stopping**: Stop experiments before final CV evaluation if partial results aren't promising
-- **Auto Mode**: Automatically update the best experiment when improvements are found
-- **Hyperparameter Optimization**: Grid and random search support
-- **Feature Selection**: Permutation importance with recursive elimination
-- **Baseline Suite**: Quick benchmarking with 10 standard models
-- **Checkpoint System**: Save and restore a Lab instance to maintain the same conditions and preserve your experiment evaluations
+Instead of scattered scripts and notebooks, the `Lab` class encapsulates everything required for a rigorous ML experiment:
+*   **Data**: Training and testing datasets (handled efficiently via Polars).
+*   **Protocol**: A defined Cross-Validation strategy.
+*   **Measurement**: A specific Error or Performance Metric.
+*   **Criteria**: Rules for statistical comparison to determine if Model A is *truly* better than Model B.
 
-There is a one-to-one relationship between EmpiricML experiments and pipelines.
-EmpiricML Pipelines are combinations of transformers (data transformation classes) and estimators (algorithms like Random Forest, XGBoost, etc.), similar to sklearn Pipelines, but they work with Polars LazyFrames instead of numpy arrays. 
-Every time you run an experiment, the pipeline related to that experiment is validated through cross-validation. 
+## ✨ Key Features
 
-## Installation
+*   **⚡ Polars Integration**: Pipelines work with Polars LazyFrames for high-performance data processing.
+*   **📊 Automated CV Evaluation**: Every experiment is rigorously cross-validated.
+*   **⚖️ Statistical Comparison**: Don't guess. Use permutation tests and statistical thresholds to compare models.
+*   **📝 Automated Tracking**: Logs results, predictions, and pipeline configurations automatically.
+*   **🛑 Early Stopping**: Aborts unpromising experiments early to save compute resources.
+*   **🔄 Auto Mode**: Automatically tracks and persists the best-performing experiment.
+*   **🔍 Hyperparameter Optimization**: Built-in support for Grid and Random search.
+*   **🧹 Feature Selection**: Permutation importance with recursive elimination.
+*   **💾 Checkpointing**: Save/Restore your `Lab` state to pause and resume work seamlessly.
+
+## 🛠️ Architecture
+
+```mermaid
+classDiagram
+    class Lab {
+        +TrainData
+        +TestData
+        +Metric
+        +CV_Strategy
+        +run_experiment(pipeline)
+        +compare_experiments()
+    }
+    class Pipeline {
+        +Transformers
+        +Estimator
+    }
+    class ExperimentResult {
+        +CV_Scores
+        +Predictions
+        +TrainingTime
+    }
+
+    Lab --> Pipeline : Executes
+    Lab --> ExperimentResult : Produces
+    Pipeline ..> Polars : Uses LazyFrames
+```
+
+## 📦 Installation
 
 ```bash
 pip install empml
 ```
 
-## Quick Start
+## 🚀 Quick Start
+
+### 1. Initialize your Laboratory
+
+First, define the environment for your experiments. This ensures all models are evaluated on the exact same data and metrics.
 
 ```python
 import polars as pl
-
-from empml.pipelines import Pipeline
 from empml.metrics import MAE
-from empml.estimators import EstimatorWrapper 
 from empml.data import CSVDownloader
 from empml.cv import KFold
 from empml.lab import Lab, EvalParams
 
-# Initialize lab instance 
+# Create the Lab
 lab = Lab(
-    train_downloader = CSVDownloader(path = 'train.csv', separator = ','),  
+    name = 'house_prices_lab',
+    # Data Loading
+    train_downloader = CSVDownloader(path='train.csv', separator=','),
+    test_downloader = CSVDownloader(path='test.csv', separator=','),
+    
+    # Target Variable
+    target = 'price',
+    
+    # Evaluation Protocol
     metric = MAE(),
-    cv_generator = KFold(n_splits = 5, random_state = 0),
-    target = 'y',
-    minimize = True, 
-    name = 'mylab', 
-    row_id = None, 
-    eval_params = EvalParams(n_folds_threshold = 1, alpha = 0.05, n_iters = 200), 
-    test_downloader = CSVDownloader(path = 'test.csv', separator = ','),
+    minimize = True,
+    cv_generator = KFold(n_splits=5, random_state=42),
+    
+    # Comparison Rules
+    eval_params = EvalParams(n_folds_threshold=1, alpha=0.05, n_iters=200)
 )
 ```
 
-Here is a description of the arguments:
-- **train_downloader**: Class for downloading the training data into the lab object as a Polars LazyFrame, accessible through the `.train` attribute
-- **metric**: Class for computing the error or performance metric 
-- **cv_generator**: Class for generating the cross-validation setting
-- **target**: The column name of the target variable in the train and test data
-- **minimize**: Boolean variable that establishes whether the metric should be minimized
-- **name**: The name of the lab
-- **row_id**: The name of the column that uniquely identifies a single row in the training data. Default value is None. If `row_id=None`, the column is automatically created 
-- **eval_params**: Class containing the details for comparing two experiments (more details later)
-- **test_downloader**: Class for downloading the test data into the lab object as a Polars LazyFrame, accessible through the `.test` attribute. Default value is None.
+### 2. Define a Pipeline and Run an Experiment
 
-
-## How to Run an Experiment
+EmpiricML pipelines combine Feature Engineering (Transformers) and Modeling (Estimators).
 
 ```python
 from lightgbm import LGBMRegressor 
 from empml.pipelines import Pipeline
-from empml.transformers import Log1pFeatures  # Class for creating new features by applying log1p transformation to existing ones
-from empml.estimators import EstimatorWrapper # Transform a sklearn-like estimator to be compatible with Polars LazyFrames
+from empml.transformers import Log1pFeatures
+from empml.wrappers import SKlearnWrapper
 
-features = [
-    'feat_1', 'feat_2', 'feat_3'
-]
+# Define features to use
+features = ['sqft_living', 'sqft_lot', 'bedrooms', 'bathrooms']
 
-pipe = Pipeline(steps = [
+# Create a pipeline
+pipe = Pipeline(
+    steps = [
+        # Feature Engineering: Apply Log1p to numerical features
         ('log_scale', Log1pFeatures(features=features, new_features_suffix='')),
-        ('estimator', EstimatorWrapper(estimator=LGBMRegressor(verbose=-1), features=features, target='y'))
+        # Modeling: Wrap sklearn-compatible estimators
+        ('model', SKlearnWrapper(
+            estimator=LGBMRegressor(verbose=-1), 
+            features=features, 
+            target='price'
+        ))
     ], 
-    name = 'lightgbm - log transform', 
-    description = f'Base LightGBM with log transformation of the features. The features used are: {features}', 
+    name = 'LGBM_Optimized', 
+    description = 'LightGBM regressor with log-transformed features.'
 )
 
+# Run the experiment in the Lab
 lab.run_experiment(pipeline=pipe)
 ```
 
-## License
+## 📂 Project Structure
 
-MIT License
+The library is organized into logical modules found in `src/empml`:
 
-## Contributing
+*   `lab`: The core `Lab` class management.
+*   `pipelines`: Scikit-learn style pipelines compatible with Polars.
+*   `wrappers`: Wrappers for ML algorithms (XGBoost, LightGBM, CatBoost, Sklearn, Pytorch).
+*   `transformers`: Feature engineering blocks.
+*   `metrics`: Performance metrics.
+*   `data`: Tools for handling data loading and downloads.
+*   `cv`: Cross-validation splitters.
 
-Contributions are welcome! Please open an issue or submit a pull request.
+## 🤝 Contributing
 
-## Citation
+Contributions are welcome! Please check out the issues or submit a PR.
+
+1.  Fork the repository
+2.  Create your feature branch (`git checkout -b feature/new-feature`)
+3.  Commit your changes (`git commit -m 'Add some new feature'`)
+4.  Push to the branch (`git push origin feature/new-feature`)
+5.  Open a Pull Request
+
+## 📄 Citation
 
 If you use EmpiricML in your research, please cite:
 
@@ -119,3 +167,7 @@ If you use EmpiricML in your research, please cite:
   url={https://github.com/PasqualeTrani/EmpiricML}
 }
 ```
+
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
