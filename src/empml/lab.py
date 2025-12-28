@@ -734,7 +734,13 @@ class Lab:
             return features
         
     
-    def run_experiment_on_test(self, experiment_id : int, eval_overfitting : bool = True, store_preds : bool = True, verbose : bool = True):
+    def run_experiment_on_test(
+        self, 
+        experiment_id : int,
+        eval_overfitting : bool = True, 
+        store_preds : bool = True, 
+        verbose : bool = True
+    ) -> Dict[str, Union[float, List[float]]]:
         """Compute performance metrics of a pipeline associated with an experiment on the test set."""
 
         if not(self.test_downloader):
