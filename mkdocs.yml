@@ -88,7 +88,17 @@ plugins:
 nav:
   - Home: index.md
   - Install: install.md
-  - API: api.md
+  - API Navigation:
+    - Introduction: api.md
+    - Base: api/base.md
+    - CV: api/cv.md
+    - Data: api/data.md
+    - Errors: api/errors.md
+    - Lab: api/lab.md
+    - Metrics: api/metrics.md
+    - Pipeline: api/pipeline.md
+    - Transformers: api/transformers.md
+    - Wrappers: api/wrappers.md
   - Examples: examples.md
   - Contributing: contributing.md
 
