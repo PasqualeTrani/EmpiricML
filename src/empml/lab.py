@@ -61,9 +61,9 @@ logging.basicConfig(
 pl.Config.set_engine_affinity(engine='streaming')
 
 @dataclass 
-class EvalParams:
+class ComparisonCriteria:
     """
-    Evaluation parameters for comparing experiment performance.
+    Statistical criteria for comparing experiment performance.
     
     Choose either percentage threshold OR statistical testing approach.
     """
@@ -121,7 +121,7 @@ class Lab:
         metric: Metric,
         cv_generator: CVGenerator,
         target: str,
-        eval_params : EvalParams,
+        comparison_criteria : ComparisonCriteria,
         minimize: bool = True,
         row_id: str | None = None,
         test_downloader: DataDownloader | None = None,
@@ -135,7 +135,7 @@ class Lab:
             metric: Performance metric for evaluation
             cv_generator: Cross-validation splitting strategy
             target: Name of target column
-            eval_params: Parameters for experiment comparison
+            comparison_criteria: Statistical criteria for experiment comparison
             minimize: Whether to minimize metric (default True)
             row_id: Column name for row identifier
             test_downloader: Optional test data source
@@ -158,7 +158,7 @@ class Lab:
         self.cv_indexes = self.cv_generator.split(self.train, self.row_id)
         self.n_folds = len(self.cv_indexes)
 
-        self._set_eval_params(eval_params=eval_params)
+        self._set_eval_params(comparison_criteria=comparison_criteria)
                                                
         self.next_experiment_id = 1 
         self._set_best_experiment()
@@ -184,15 +184,15 @@ class Lab:
         self.results = create_results_schema()
         self.results_details = create_results_details_schema()
 
-    def _set_eval_params(self, eval_params : EvalParams):
+    def _set_eval_params(self, comparison_criteria : ComparisonCriteria):
         """Configure evaluation mode (percentage vs statistical)."""
-        self.n_folds_threshold = eval_params.n_folds_threshold
-        self.pct_threshold = eval_params.pct_threshold 
-        self.alpha = eval_params.alpha
-        self.n_iters = eval_params.n_iters
+        self.n_folds_threshold = comparison_criteria.n_folds_threshold
+        self.pct_threshold = comparison_criteria.pct_threshold 
+        self.alpha = comparison_criteria.alpha
+        self.n_iters = comparison_criteria.n_iters
 
         # Set evaluation mode flags
-        if eval_params.has_pct:  
+        if comparison_criteria.has_pct:  
             self.eval_has_pct = True
             self.eval_has_statistical = False
         else:  
@@ -570,7 +570,14 @@ class Lab:
         )
 
         # select best result of the hpo 
-        hpo_results = self.results.tail(number_of_experiments).sort('cv_mean_score', descending=self.minimize).tail(1).row(0, named=True)
+        hpo_results = (
+            self.results
+            .tail(number_of_experiments)
+            .filter(pl.col('is_completed') == True)  # if compare_against is not None, only consider completed experiments
+            .sort('cv_mean_score', descending=self.minimize)
+            .tail(1)
+            .row(0, named=True)
+        )
         hpo_results['best_pipeline'] = self.retrieve_pipeline(experiment_id = hpo_results['experiment_id'])
 
         return hpo_results

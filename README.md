@@ -56,7 +56,7 @@ import polars as pl
 from empml.metrics import MAE
 from empml.data import CSVDownloader
 from empml.cv import KFold
-from empml.lab import Lab, EvalParams
+from empml.lab import Lab, ComparisonCriteria
 
 # Create the Lab
 lab = Lab(
@@ -73,8 +73,8 @@ lab = Lab(
     minimize = True,
     cv_generator = KFold(n_splits=5, random_state=42),
     
-    # Comparison Rules
-    eval_params = EvalParams(n_folds_threshold=1, alpha=0.05, n_iters=200)
+    # Comparison Criteria
+    comparison_criteria = ComparisonCriteria(n_folds_threshold=1, alpha=0.05, n_iters=200)
 )
 ```
 
