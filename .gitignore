@@ -74,3 +74,9 @@ config/*.local.json
 
 # notebooks 
 notebooks/
+
+# docs 
+docs/
+
+# site
+site/
