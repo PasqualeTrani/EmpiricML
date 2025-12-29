@@ -11,7 +11,7 @@ EmpiricML is a Python framework designed to make building, testing, and tracking
 
 ### Machine Learning as an Empirical Science
 The first core idea behind the framework is that **Machine Learning is an empirical science**.
-In empirical sciences, you don't just "try things"; you design **experiments** to test hypotheses. To do that effectively, you need a controlled environment, i.e. a **Laboratory**.
+In empirical sciences, we design **experiments** to test hypotheses. To do that effectively, we need a controlled environment, i.e. a **Laboratory**.
 
 **EmpiricML provides that Laboratory.**
 
@@ -23,9 +23,9 @@ Instead of scattered scripts and notebooks, the `Lab` class encapsulates everyth
 *   **Criteria**: Rules for statistical comparison to determine if Model A is *truly* better than Model B.
 
 ### Justifying Complexity with Evidence
-Another key idea is that **complexity must be earned**. You should start with simple baselines and only adopt more complex models if they demonstrate a clear, statistically significant improvement.
+Another key idea is that **complexity must be earned**. We should start with simple baselines and only adopt more complex models if they demonstrate a clear, statistically significant improvement.
 
-In industrial environments, complexity carries a cost in infrastructure, interpretability, latency, and maintenance. EmpiricML encourages a workflow where you gather **evidence** that a complex model is strictly better than a simpler one before accepting that cost.
+In industrial environments, complexity carries a cost in infrastructure, interpretability, latency, and maintenance. EmpiricML encourages a workflow where we gather **evidence** that a complex model is strictly better than a simpler one before accepting that cost.
 
 ## Advantages
 

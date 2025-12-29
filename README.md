@@ -16,7 +16,7 @@ EmpiricML is a Python framework designed to make building, testing, and tracking
 
 ## The Core Idea
 The core idea behind the framework is that **Machine Learning is an empirical science**.
-In empirical sciences, you don't just "try things"; you design **experiments** to test hypotheses. To do that effectively, you need a controlled environment, i.e. a **Laboratory**.
+In empirical sciences, we design **experiments** to test hypotheses. To do that effectively, we need a controlled environment, i.e. a **Laboratory**.
 
 **EmpiricML provides that Laboratory.**
 
