@@ -34,7 +34,9 @@ EmpiricML allows you to significantly shrink the time it takes to put a model in
 
 ### Better Data Processing with Polars
 EmpiricML encourages and facilitates the use of **Polars** over Pandas. Polars offers numerous advantages:
+
 *   **Performance**: Lightning-fast execution due to its Rust implementation and Arrow memory format.
 *   **Memory Efficiency**: Handles larger-than-RAM datasets with LazyFrames.
 *   **Expressiveness**: A modern, readable query API that reduces bugs and improves maintainability.
+
 For more information, see the [Polars documentation](https://pola-rs.github.io/polars-book/).
