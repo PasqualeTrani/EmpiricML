@@ -111,8 +111,9 @@ class StdFeatures(BaseTransformer):
         return self
     
     def transform(self, X: pl.LazyFrame):
-        # Collect and convert to pandas for row-wise std calculation
-        return X.with_columns(pl.Series(X.select(self.features).collect().to_pandas().std(1)).alias(self.new_feature))
+        return X.with_columns(
+            pl.concat_list(self.features).list.std().alias(self.new_feature)
+        )
     
 
 class MedianFeatures(BaseTransformer):
@@ -131,50 +132,10 @@ class MedianFeatures(BaseTransformer):
         return self
     
     def transform(self, X: pl.LazyFrame):
-        # Collect and convert to pandas for row-wise median calculation
-        return X.with_columns(pl.Series(X.select(self.features).collect().to_pandas().median(1)).alias(self.new_feature))
+        return X.with_columns(
+            pl.concat_list(self.features).list.median().alias(self.new_feature)
+        )
     
-
-class KurtFeatures(BaseTransformer):
-    """Compute kurtosis across multiple features row-wise."""
-    
-    def __init__(self, features: List[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute kurtosis over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-    
-    def transform(self, X: pl.LazyFrame):
-        # Collect and convert to pandas for row-wise kurtosis calculation
-        return X.with_columns(pl.Series(X.select(self.features).collect().to_pandas().kurt(1)).alias(self.new_feature))
-    
-
-class SkewFeatures(BaseTransformer):
-    """Compute skewness across multiple features row-wise."""
-    
-    def __init__(self, features: List[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute skewness over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-    
-    def transform(self, X: pl.LazyFrame):
-        # Collect and convert to pandas for row-wise skewness calculation
-        return X.with_columns(pl.Series(X.select(self.features).collect().to_pandas().skew(1)).alias(self.new_feature))
-    
-
 class ModuleFeatures(BaseTransformer):
     """Compute Euclidean norm (module) of two features."""
     
@@ -254,37 +215,46 @@ class MeanTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute mean target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute mean target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
+        
+        # Calculate global mean for null-safety against unseen categories
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).mean()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0 # Default if everything is null
         
         for f in self.features:
             # Always use prefix/suffix during fit to avoid duplicate column names
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            
+            # Materialize lookup table to avoid plan explosion during transform
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).mean().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
+        """Join encoded values to input data and fill nulls for unseen categories."""
         
         # Join all encoded columns
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            # Fill unseen categories with global mean
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         # If replacing originals, drop them and rename encoded columns
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             # Rename encoded columns to original names
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class StdTargetEncoder(BaseTransformer):
@@ -343,33 +313,38 @@ class StdTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute std of target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute std of target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        # Calculate global std for null-safety against unseen categories
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).std()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).std().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
-        
+        """Join encoded values to input data and fill nulls."""
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class MaxTargetEncoder(BaseTransformer):
@@ -426,33 +401,37 @@ class MaxTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute max target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute max target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).max()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).max().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
-        
+        """Join encoded values to input data and fill nulls."""
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class MinTargetEncoder(BaseTransformer):
@@ -509,33 +488,37 @@ class MinTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute min target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute min target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).min()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).min().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
-        
+        """Join encoded values to input data and fill nulls."""
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class MedianTargetEncoder(BaseTransformer):
@@ -592,33 +575,37 @@ class MedianTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute median target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute median target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).median()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).median().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
-        
+        """Join encoded values to input data and fill nulls."""
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class KurtTargetEncoder(BaseTransformer):
@@ -675,33 +662,38 @@ class KurtTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute kurtosis of target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute kurtosis of target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).kurtosis()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).kurtosis().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
+        """Join encoded values to input data and fill nulls."""
         
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 class SkewTargetEncoder(BaseTransformer):
@@ -758,33 +750,37 @@ class SkewTargetEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Compute skewness of target value per category."""
-        self.target_encoder_dict: Dict[str, pl.LazyFrame] = {}
+        """Compute skewness of target value per category and materialize mapping."""
+        self.target_encoder_dict: Dict[str, pl.DataFrame] = {}
         
+        self.global_encoded_val = X.select(pl.col(self.encoder_col).skew()).collect().item()
+        if self.global_encoded_val is None:
+            self.global_encoded_val = 0.0
+            
         for f in self.features:
             temp_col_name = f'{self.prefix}{f}{self.suffix}'
             self.target_encoder_dict[f] = X.group_by(f).agg(
                 pl.col(self.encoder_col).skew().alias(temp_col_name)
-            )
+            ).collect()
         
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data."""
-        transf_X = X.clone()
-        
+        """Join encoded values to input data and fill nulls."""
         for f in self.features:
-            transf_X = transf_X.join(self.target_encoder_dict[f], how='left', on=f)
+            temp_col_name = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self.target_encoder_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
         
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{self.prefix}{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 # -------------------- ORDINAL ENCODING -------------------------------- #
@@ -838,18 +834,20 @@ class OrdinalEncoder(BaseTransformer):
             )
 
     def fit(self, X: pl.LazyFrame):
-        """Learn ordinal mapping from sorted unique values."""
-        self.encoding_dict: Dict[str, pl.LazyFrame] = {}
+        """Learn ordinal mapping and materialize lookup table."""
+        self.encoding_dict: Dict[str, pl.DataFrame] = {}
         
         for f in self.features:
             temp_col_name = f'{f}{self.suffix}'
             # Get sorted unique values and assign sequential integers
+            # Materialize lookup table to avoid plan explosion during transform
             unique_values = (
                 X.select(f)
                 .filter(pl.col(f).is_not_null())
                 .unique()
                 .sort(f)
                 .with_row_index(name=temp_col_name)
+                .collect()
             )
             self.encoding_dict[f] = unique_values
         
@@ -857,15 +855,14 @@ class OrdinalEncoder(BaseTransformer):
     
     def transform(self, X: pl.LazyFrame):
         """Apply ordinal encoding with special values for null (-99) and unknown (-9999)."""
-        transf_X = X.clone()
         
         for f in self.features:
             temp_col_name = f'{f}{self.suffix}'
             # Join encoding dictionary
-            transf_X = transf_X.join(self.encoding_dict[f], how='left', on=f)
+            X = X.join(self.encoding_dict[f].lazy(), how='left', on=f)
             
             # Handle nulls and unknown categories
-            transf_X = transf_X.with_columns(
+            X = X.with_columns(
                 pl.when(pl.col(f).is_null())
                 .then(pl.lit(-99))  # Null values
                 .when(pl.col(temp_col_name).is_null())
@@ -876,14 +873,14 @@ class OrdinalEncoder(BaseTransformer):
         
         # If replacing originals, drop them and rename encoded columns
         if self.replace_original:
-            transf_X = transf_X.drop(self.features)
+            X = X.drop(self.features)
             rename_mapping = {
                 f'{f}{self.suffix}': f 
                 for f in self.features
             }
-            transf_X = transf_X.rename(rename_mapping)
+            X = X.rename(rename_mapping)
         
-        return transf_X
+        return X
 
 
 # -------------------- DUMMY ENCODING -------------------------------- #
@@ -918,32 +915,22 @@ class DummyEncoder(BaseTransformer):
     
     def transform(self, X: pl.LazyFrame):
         """Create binary columns for each category, plus null and unknown."""
-        transf_X = X.clone()
         
         for f in self.features:
             known_categories = self.encoding_dict[f]
             
-            # Create binary column for each known category
-            for category in known_categories:
-                transf_X = transf_X.with_columns(
-                    (pl.col(f) == category).cast(pl.Int8).alias(f'{f}_dummy_{category}')
-                )
-            
-            # Binary column for null values
-            transf_X = transf_X.with_columns(
-                pl.col(f).is_null().cast(pl.Int8).alias(f'{f}_dummy_null')
-            )
-            
-            # Binary column for unknown categories (not null and not in known)
-            is_known = pl.lit(False)
-            for category in known_categories:
-                is_known = is_known | (pl.col(f) == category)
-            
-            transf_X = transf_X.with_columns(
-                (pl.col(f).is_not_null() & ~is_known).cast(pl.Int8).alias(f'{f}_dummy_unknown')
-            )
+            # Create all binary columns in a single with_columns call to prevent plan explosion
+            X = X.with_columns([
+                (pl.col(f) == category).cast(pl.Int8).alias(f'{f}_dummy_{category}')
+                for category in known_categories
+            ] + [
+                pl.col(f).is_null().cast(pl.Int8).alias(f'{f}_dummy_null'),
+                (pl.col(f).is_not_null() & ~pl.col(f).is_in(known_categories))
+                .cast(pl.Int8)
+                .alias(f'{f}_dummy_unknown')
+            ])
         
-        return transf_X
+        return X
     
 
 # ------------------------------------------------------------------------------------------
@@ -974,14 +961,21 @@ class StandardScaler(BaseTransformer):
         return self
     
     def transform(self, X: pl.LazyFrame):
-        """Apply z-score normalization: (x - mean) / std."""
+        """Apply z-score normalization: (x - mean) / std. Handles std=0."""
         
         # Standardize each feature
         for f in self.features:
-            X = X.with_columns(
-                ((pl.col(f) - self.stats[f'{f}_mean'].item()) / self.stats[f'{f}_std'].item())
-                .alias(f'{f}{self.suffix}')
-            )
+            mean_val = self.stats[f'{f}_mean'].item()
+            std_val = self.stats[f'{f}_std'].item()
+            
+            # Handle null or zero std to avoid division by zero/inf
+            if std_val is None or std_val == 0:
+                X = X.with_columns(pl.lit(0.0).alias(f'{f}{self.suffix}'))
+            else:
+                X = X.with_columns(
+                    ((pl.col(f) - mean_val) / std_val)
+                    .alias(f'{f}{self.suffix}')
+                )
         
         return X
 
@@ -1014,10 +1008,17 @@ class MinMaxScaler(BaseTransformer):
         
         # Scale each feature
         for f in self.features:
-            X = X.with_columns(
-                ((pl.col(f) - self.stats[f'{f}_min'].item()) / (self.stats[f'{f}_max'].item()) - (self.stats[f'{f}_min'].item()))
-                .alias(f'{f}{self.suffix}')
-            )
+            min_val = self.stats[f'{f}_min'].item()
+            max_val = self.stats[f'{f}_max'].item()
+            
+            # Prevent division by zero if all values are identical
+            denominator = max_val - min_val
+            if denominator == 0:
+                X = X.with_columns(pl.lit(0.0).alias(f'{f}{self.suffix}'))
+            else:
+                X = X.with_columns(
+                    ((pl.col(f) - min_val) / denominator).alias(f'{f}{self.suffix}')
+                )
         
         return X
     
@@ -1134,23 +1135,27 @@ class SimpleImputer(BaseTransformer):
             self.strategy = strategy
 
     def fit(self, X: pl.LazyFrame):
-        """Compute imputation values based on strategy."""
+        """Compute imputation values based on strategy and materialize results."""
         if self.strategy == 'median':
-            self.values = X.select(self.features).median()
+            stats = X.select(self.features).median().collect()
         else:
-            self.values = X.select(self.features).mean()
+            stats = X.select(self.features).mean().collect()
+        
+        # Store as dictionary for fast lookup in transform without nested collection
+        # Handle cases where column is empty or all nulls
+        self.impute_values = {}
+        for col in self.features:
+            val = stats[col].item()
+            self.impute_values[col] = val if val is not None else 0.0
         
         return self
 
     def transform(self, X: pl.LazyFrame):
         """Fill null and NaN values with computed statistics."""
-        transf_X = (
-            X
-            .with_columns(pl.col(col).fill_null(self.values.select([col]).collect().item()) for col in self.features)
-            .with_columns(pl.col(col).fill_nan(self.values.select([col]).collect().item()) for col in self.features)
-        )
-
-        return transf_X
+        return X.with_columns([
+            pl.col(col).fill_null(self.impute_values[col]).fill_nan(self.impute_values[col]) 
+            for col in self.features
+        ])
 
 class FillNulls(BaseTransformer):
     """Fill null and NaN values with a constant."""
@@ -1218,28 +1223,40 @@ class GenerateLags(BaseTransformer):
         else:
             raise ValueError(f'lag_frequency should be in the following list: {time_arguments}')
 
+    def _validate_date_col(self, X: pl.LazyFrame):
+        """Check if date_col is of type Date or Datetime."""
+        dtype = X.select(self.date_col).limit(1).collect().to_series().dtype
+        if not (dtype == pl.Date or isinstance(dtype, pl.Datetime)):
+            raise TypeError(f"Column '{self.date_col}' must be of type Date or Datetime, not {dtype}")
+        return dtype
+
     def fit(self, X: pl.LazyFrame):
-        """Store base data for lag computation."""
-        self.base_lag = X.select([self.ts_index, self.date_col, self.lag_col])
+        """Store base data for lag computation and materialize."""
+        self._validate_date_col(X)
+        self.base_lag = X.select([self.ts_index, self.date_col, self.lag_col]).collect()
         return self
     
     def transform(self, X: pl.LazyFrame):
         """Generate lag features by joining shifted dates."""
-        # Combine fit and transform data, remove duplicates
+        # Ensure date_col is valid
+        dtype = self._validate_date_col(X)
+        
+        # Combine materialized fit data with transform data (still lazy)
+        # We materialise 'base' lookup table to prevent the plan from exploding in the loop
         base = pl.concat([
-            self.base_lag, 
+            self.base_lag.lazy(), 
             X.select([self.ts_index, self.date_col, self.lag_col])
-        ]).unique()
+        ]).unique().collect()
 
-        # Get time unit from date column dtype
-        time_unit = X.select(self.date_col).collect().to_series().dtype.time_unit
+        # Materialize time unit once (only for Datetime)
+        time_unit = getattr(dtype, 'time_unit', None)
 
         # Create lag feature for each time delta
         for delta in range(self.lag_min, self.lag_max + 1, self.lag_step):
             duration_dct = {self.lag_frequency: delta, 'time_unit': time_unit}
             X = (
                 X.join(
-                    base.with_columns(
+                    base.lazy().with_columns(
                         pl.col(self.date_col) + pl.duration(**duration_dct)
                     ).rename({self.lag_col: f'{self.lag_col}_lag{delta}{self.lag_frequency}'}), 
                     how='left', 

@@ -8,8 +8,6 @@
 | `MinFeatures` | Compute min across multiple features. |
 | `StdFeatures` | Compute standard deviation across multiple features. |
 | `MedianFeatures` | Compute median across multiple features. |
-| `KurtFeatures` | Compute kurtosis across multiple features. |
-| `SkewFeatures` | Compute skewness across multiple features. |
 | `ModuleFeatures` | Compute modulus of features. |
 | `MeanTargetEncoder` | Target encoding using mean. |
 | `StdTargetEncoder` | Target encoding using standard deviation. |
@@ -47,12 +45,6 @@ Compute standard deviation across multiple features.
 
 ## MedianFeatures
 Compute median across multiple features.
-
-## KurtFeatures
-Compute kurtosis across multiple features.
-
-## SkewFeatures
-Compute skewness across multiple features.
 
 ## ModuleFeatures
 Compute modulus of features.
