@@ -1,42 +1,59 @@
 <p align="center">
-  <img src="EmpiricML-logo.png" width="250" height="250" alt="EmpiricML Logo">
+  <img src="EmpiricML-logo.png", width = "250", height = "250", alt="EmpiricML Logo">
 </p>
 
-# Home
+# EmpiricML
 
-## What is EmpiricML?
-EmpiricML is a Python framework designed to make building, testing, and tracking machine learning models on **tabular data** faster, easier, and most importantly, **robust**. Built on the shoulders of giants - **scikit-learn** and **Polars** - it brings the concept of a scientific "Laboratory" to your ML workflow.
+![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-active-success)
 
-## The Core Ideas Behind the Framework
 
-### Machine Learning as an Empirical Science
-The first core idea behind the framework is that **Machine Learning is an empirical science**.
-In empirical sciences, we design **experiments** to test hypotheses. To do that effectively, we need a controlled environment, i.e. a **Laboratory**.
+EmpiricML is an open-source Python framework designed to bring the rigor of empirical science to the Machine Learning development process.
+Are you tired of scattered Jupyter Notebooks and untracked experiments? EmpiricML provides a structured "Laboratory" environment to help you move from messy scripts to reproducible science.
 
-**EmpiricML provides that Laboratory.**
+## The Philosophy: ML as an Empirical Science
+The core idea behind EmpiricML is that building a machine learning model is an iterative, scientific process. You form a hypothesis (e.g., "Adding these specific features will decrease the error"), and you must test it in a controlled environment.
+EmpiricML provides that environment through the Lab class. It encapsulates everything needed for rigorous ML experimentation:
 
-Instead of scattered scripts and notebooks, the `Lab` class encapsulates everything required for a rigorous ML experiment:
+* Train and test data management
+* Cross-validation strategies
+* Evaluation metrics
+* Standardized criteria for comparing models
 
-*   **Data**: Training and testing datasets (handled efficiently via Polars LazyFrames).
-*   **Protocol**: A defined Cross-Validation strategy.
-*   **Measurement**: A specific Error or Performance Metric.
-*   **Criteria**: Rules for statistical comparison to determine if Model A is *truly* better than Model B.
+## Key Features
 
-### Justifying Complexity with Evidence
-Another key idea is that **complexity must be earned**. We should start with simple baselines and only adopt more complex models if they demonstrate a clear, statistically significant improvement.
+### Experiment Tracking
+Keep a detailed ledger of every run. EmpiricML automatically stores:
 
-In industrial environments, complexity carries a cost in infrastructure, interpretability, latency, and maintenance. EmpiricML encourages a workflow where we gather **evidence** that a complex model is strictly better than a simpler one before accepting that cost.
+* Metric performance and overfitting percentages
+* Training and inference latency
+* Generated predictions for downstream analysis
 
-## Advantages
+### Polars-Native Pipelines
+Performance is at the heart of EmpiricML. Unlike scikit-learn pipelines which are NumPy-based, EmpiricML transformations utilize Polars LazyFrames. This allows for lightning-fast, memory-efficient data handling even with large datasets.
 
-### Shrink Time to Production
-EmpiricML allows you to significantly shrink the time it takes to put a model into production. By enforcing structured experimentation and managing artifacts automatically, the transition from a research prototype to a production-ready model is seamless, eliminating the need for extensive code rewriting.
+### Automated Workflows
+Stop writing boilerplate code for standard tasks. EmpiricML automates:
 
-### Better Data Processing with Polars
-EmpiricML encourages and facilitates the use of **Polars** over Pandas. Polars offers numerous advantages:
+* Hyperparameter Optimization (HPO)
+* Feature Importance calculation
+* Automated Feature Selection
 
-*   **Performance**: Lightning-fast execution due to its Rust implementation and Arrow memory format.
-*   **Memory Efficiency**: Handles larger-than-RAM datasets with LazyFrames.
-*   **Expressiveness**: A modern, readable query API that reduces bugs and improves maintainability.
+### Rigorous Model Comparison
+Compare experiments with statistical confidence. Define comparison criteria in your Lab class based on:
 
-For more information, see the [Polars documentation](https://pola-rs.github.io/polars-book/).
+Performance Thresholds: Does Model B outperform Model A by a significant margin?
+Statistical Tests: Use built-in tests to ensure your improvements aren't just noise
+
+EmpiricML can automatically update and store your "Best Model" based on these predefined rules.
+
+### Fast ML Baselines
+Go from zero to a leaderboard in seconds. With just a few lines of code, you can evaluate up to 10 baseline models (including LightGBM, XGBoost, Random Forest, MLP, and more) to establish a performance floor for your project.
+
+ ### Early Stopping
+ Aborts unpromising experiments early to save compute resources.
+
+### Checkpointing 
+
+Save/Restore your `Lab` state to pause and resume work seamlessly.
