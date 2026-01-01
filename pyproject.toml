@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "EmpiricML"
-version = "0.1.2"
+version = "0.1.0"
 authors = [
     {name = "Pasquale Trani", email = "ptrani96ds@gmail.com"}
 ]
