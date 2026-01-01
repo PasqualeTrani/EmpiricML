@@ -5,7 +5,7 @@ Provides Lab class for running experiments with cross-validation, tracking resul
 hyperparameter optimization, and statistical comparison of models.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 import uuid
 import os
 from datetime import datetime
