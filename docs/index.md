@@ -51,8 +51,8 @@ EmpiricML can automatically update and store your "Best Model" based on these pr
 ### Fast ML Baselines
 Go from zero to a leaderboard in seconds. With just a few lines of code, you can evaluate up to 10 baseline models (including LightGBM, XGBoost, Random Forest, MLP, and more) to establish a performance floor for your project.
 
- ### Early Stopping
- Aborts unpromising experiments early to save compute resources.
+### Early Stopping
+Aborts unpromising experiments early to save compute resources.
 
 ### Checkpointing 
 
