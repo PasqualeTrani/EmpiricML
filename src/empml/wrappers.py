@@ -2,8 +2,6 @@ import polars as pl
 import numpy as np  
 from typing import List, Any, Optional
 from empml.base import BaseEstimator, SKlearnEstimator
-from skorch import NeuralNetRegressor, NeuralNetClassifier #type:ignore
-
 # streaming engine as the default for .collect()
 pl.Config.set_engine_affinity(engine='streaming')
 
@@ -20,6 +18,18 @@ def _check_torch_available():
             "  For CPU: pip install torch --index-url https://download.pytorch.org/whl/cpu\n"
             "  For CUDA 12.1: pip install torch --index-url https://download.pytorch.org/whl/cu121\n\n"
             "Visit https://pytorch.org/get-started/locally/ for more options."
+        ) from e
+
+
+def _check_skorch_available():
+    """Check if skorch is available and raise informative error if not."""
+    try:
+        from skorch import NeuralNetRegressor, NeuralNetClassifier  # type: ignore
+        return NeuralNetRegressor, NeuralNetClassifier
+    except ImportError as e:
+        raise ImportError(
+            "skorch is required to use neural network models in EmpiricML. "
+            "Please install it: pip install skorch"
         ) from e
     
 
@@ -253,12 +263,9 @@ class TorchWrapper(BaseEstimator):
     ... )
     """
 
-    torch = _check_torch_available()
-    import torch.nn as nn
-    
     def __init__(
         self,
-        module: type[nn.Module],
+        module: Any,  # torch.nn.Module class
         features: List[str],
         target: str,
         task: str = 'regression',
@@ -392,6 +399,8 @@ class TorchWrapper(BaseEstimator):
         all_params = {**common_params, **module_params}
         
         # Create the appropriate estimator
+        _check_torch_available()
+        NeuralNetRegressor, NeuralNetClassifier = _check_skorch_available()
         if self.task == 'classification':
             self.estimator_ = NeuralNetClassifier(**all_params)
         elif self.task == 'regression':

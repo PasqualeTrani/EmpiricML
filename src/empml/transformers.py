@@ -155,10 +155,33 @@ class ModuleFeatures(BaseTransformer):
         f1, f2 = self.features  # Unpack the two features
         # Compute sqrt(f1^2 + f2^2)
         return X.with_columns(((pl.col(f1)**2) + (pl.col(f2)**2)).sqrt().alias(self.new_feature))
-    
+
+
+class InteractionFeatures(BaseTransformer):
+    """Create pairwise multiplication features from feature pairs."""
+
+    def __init__(self, feature_pairs: List[Tuple[str, str]], separator: str = '_x_'):
+        """
+        Args:
+            feature_pairs: List of (col1, col2) tuples to multiply
+            separator: String between feature names in output column (default: '_x_')
+        """
+        self.feature_pairs = feature_pairs
+        self.separator = separator
+
+    def fit(self, X: pl.LazyFrame):
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Create f1 * f2 columns for each pair in a single with_columns call."""
+        return X.with_columns([
+            (pl.col(f1) * pl.col(f2)).alias(f'{f1}{self.separator}{f2}')
+            for f1, f2 in self.feature_pairs
+        ])
+
 
 # ------------------------------------------------------------------------------------------
-# Categorical Encoding 
+# Categorical Encoding
 # ------------------------------------------------------------------------------------------
 
 # -------------------- TARGET ENCODING -------------------------------- #
@@ -931,7 +954,105 @@ class DummyEncoder(BaseTransformer):
             ])
         
         return X
-    
+
+
+# -------------------- FREQUENCY ENCODING -------------------------------- #
+
+class FrequencyEncoder(BaseTransformer):
+    """Encode categorical features by their frequency or proportion."""
+
+    def __init__(
+        self,
+        features: List[str],
+        normalize: bool = True,
+        prefix: str = 'freq_',
+        suffix: str = '_encoded',
+        replace_original: bool = False,
+    ):
+        """
+        Args:
+            features: Categorical columns to encode
+            normalize: If True, encode as proportion; if False, as raw count (default: True)
+            prefix: Prefix for encoded column names (default: 'freq_')
+            suffix: Suffix for encoded column names (default: '_encoded')
+            replace_original: If True, drop original columns and use their names
+                            for encoded columns, ignoring prefix/suffix (default: False)
+        """
+        self.features = features
+        self.normalize = normalize
+        self.prefix = prefix
+        self.suffix = suffix
+        self.replace_original = replace_original
+
+        # Handle empty prefix and suffix configurations
+        if not self.replace_original and self.prefix == '' and self.suffix == '':
+            warnings.warn(
+                "prefix='' and suffix='' with replace_original=False would create duplicate "
+                "column names. Setting replace_original=True automatically.",
+                UserWarning,
+                stacklevel=2
+            )
+            self.replace_original = True
+
+        if self.replace_original and self.prefix == '' and self.suffix == '':
+            warnings.warn(
+                "replace_original=True with prefix='' and suffix='' would cause errors. "
+                "Setting prefix='freq_' and suffix='_encoded' for internal processing.",
+                UserWarning,
+                stacklevel=2
+            )
+            self.prefix = 'freq_'
+            self.suffix = '_encoded'
+
+        if self.replace_original and (self.prefix != 'freq_' or self.suffix != '_encoded'):
+            warnings.warn(
+                "replace_original=True: prefix and suffix arguments are ignored. "
+                "Encoded columns will use original column names.",
+                UserWarning,
+                stacklevel=2
+            )
+
+    def fit(self, X: pl.LazyFrame):
+        """Compute frequency (or proportion) per category and materialize mapping."""
+        self._freq_dict: Dict[str, pl.DataFrame] = {}
+
+        if self.normalize:
+            self._total_count = X.select(pl.len().alias('_count')).collect().item()
+
+        for f in self.features:
+            temp_col = f'{self.prefix}{f}{self.suffix}'
+            freq_df = (
+                X.group_by(f)
+                .agg(pl.len().alias(temp_col))
+                .collect()
+            )
+            if self.normalize:
+                freq_df = freq_df.with_columns(
+                    (pl.col(temp_col).cast(pl.Float64) / self._total_count).alias(temp_col)
+                )
+            self._freq_dict[f] = freq_df
+
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Join frequency values and fill unseen categories with 0."""
+        for f in self.features:
+            temp_col = f'{self.prefix}{f}{self.suffix}'
+            X = X.join(self._freq_dict[f].lazy(), how='left', on=f)
+            X = X.with_columns(
+                pl.col(temp_col).fill_null(0.0 if self.normalize else 0)
+            )
+
+        if self.replace_original:
+            X = X.drop(self.features)
+            rename_mapping = {
+                f'{self.prefix}{f}{self.suffix}': f
+                for f in self.features
+            }
+            X = X.rename(rename_mapping)
+
+        return X
+
 
 # ------------------------------------------------------------------------------------------
 # Scalers
@@ -1024,9 +1145,49 @@ class MinMaxScaler(BaseTransformer):
     
 
 
+class RobustScaler(BaseTransformer):
+    """Scale features using median and interquartile range (IQR)."""
+
+    def __init__(self, features: List[str], suffix: str = ''):
+        """
+        Args:
+            features: Columns to scale
+            suffix: Suffix for scaled column names (default: '')
+        """
+        self.features = features
+        self.suffix = suffix
+
+    def fit(self, X: pl.LazyFrame):
+        """Compute median, Q25, Q75 for each feature."""
+        stats = X.select(
+            [pl.col(f).median().alias(f'{f}_median') for f in self.features]
+            + [pl.col(f).quantile(0.25).alias(f'{f}_q25') for f in self.features]
+            + [pl.col(f).quantile(0.75).alias(f'{f}_q75') for f in self.features]
+        )
+        self.stats: pl.DataFrame = stats.collect()
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Apply robust scaling: (x - median) / IQR. Handles IQR=0."""
+        for f in self.features:
+            median_val = self.stats[f'{f}_median'].item()
+            q25_val = self.stats[f'{f}_q25'].item()
+            q75_val = self.stats[f'{f}_q75'].item()
+            iqr = q75_val - q25_val
+
+            if iqr is None or iqr == 0:
+                X = X.with_columns(pl.lit(0.0).alias(f'{f}{self.suffix}'))
+            else:
+                X = X.with_columns(
+                    ((pl.col(f) - median_val) / iqr).alias(f'{f}{self.suffix}')
+                )
+
+        return X
+
+
 # ------------------------------------------------------------------------------------------
 # Transformation on Features
-# ------------------------------------------------------------------------------------------   
+# ------------------------------------------------------------------------------------------
 
 class Log1pFeatures(BaseTransformer):
     """Apply log(1+x) transformation to features."""
@@ -1109,6 +1270,179 @@ class InverseFeatures(BaseTransformer):
         """Compute 1/x for each feature."""
         return X.with_columns((1/pl.col(f)).alias(f'{f}{self.suffix}') for f in self.features)
 
+
+# ------------------------------------------------------------------------------------------
+# Binning
+# ------------------------------------------------------------------------------------------
+
+class QuantileBinning(BaseTransformer):
+    """Discretize continuous features into quantile-based bins."""
+
+    def __init__(
+        self,
+        features: List[str],
+        num_bins: int = 10,
+        suffix: str = '_qbin',
+        labels: Union[List[str], None] = None,
+    ):
+        """
+        Args:
+            features: Columns to discretize
+            num_bins: Number of quantile bins (default: 10)
+            suffix: Suffix for binned column names (default: '_qbin')
+            labels: Optional string labels for bins; length must equal num_bins
+
+        Raises:
+            ValueError: If labels length does not match num_bins
+        """
+        self.features = features
+        self.num_bins = num_bins
+        self.suffix = suffix
+        self.labels = labels
+
+        if self.labels is not None and len(self.labels) != self.num_bins:
+            raise ValueError(
+                f"labels length ({len(self.labels)}) must equal num_bins ({self.num_bins})"
+            )
+
+    def fit(self, X: pl.LazyFrame):
+        """Compute quantile bin edges for each feature and materialize."""
+        self._bin_edges: Dict[str, List[float]] = {}
+        quantiles = [i / self.num_bins for i in range(1, self.num_bins)]
+
+        for f in self.features:
+            edges = (
+                X.select(
+                    pl.col(f).quantile(q).alias(f'q_{q}')
+                    for q in quantiles
+                )
+                .collect()
+                .row(0)
+            )
+            unique_edges = sorted(set(e for e in edges if e is not None))
+            self._bin_edges[f] = unique_edges
+
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Assign bin indices based on learned quantile edges."""
+        for f in self.features:
+            edges = self._bin_edges[f]
+            out_col = f'{f}{self.suffix}'
+
+            if len(edges) == 0:
+                X = X.with_columns(
+                    pl.when(pl.col(f).is_null())
+                    .then(pl.lit(None))
+                    .otherwise(pl.lit(0))
+                    .cast(pl.Int32)
+                    .alias(out_col)
+                )
+                continue
+
+            # Build when/then chain: null -> null, <= edge[0] -> 0, ...
+            expr = pl.when(pl.col(f).is_null()).then(pl.lit(None))
+            expr = expr.when(pl.col(f) <= edges[0]).then(pl.lit(0))
+            for i in range(1, len(edges)):
+                expr = expr.when(pl.col(f) <= edges[i]).then(pl.lit(i))
+            expr = expr.otherwise(pl.lit(len(edges)))
+
+            if self.labels is not None:
+                # Actual number of bins may differ from num_bins due to deduplication
+                actual_bins = len(edges) + 1
+                label_map = {
+                    i: self.labels[i] if i < len(self.labels) else self.labels[-1]
+                    for i in range(actual_bins)
+                }
+                X = X.with_columns(expr.cast(pl.Int32).alias(out_col))
+                X = X.with_columns(
+                    pl.col(out_col).replace_strict(label_map, default=None).alias(out_col)
+                )
+            else:
+                X = X.with_columns(expr.cast(pl.Int32).alias(out_col))
+
+        return X
+
+
+# ------------------------------------------------------------------------------------------
+# Ranking
+# ------------------------------------------------------------------------------------------
+
+class RankFeatures(BaseTransformer):
+    """Convert features to percentile rank based on training distribution."""
+
+    def __init__(
+        self,
+        features: List[str],
+        suffix: str = '_rank',
+        method: Literal['average', 'min', 'max', 'dense'] = 'average',
+    ):
+        """
+        Args:
+            features: Columns to rank
+            suffix: Suffix for ranked column names (default: '_rank')
+            method: Ranking method (default: 'average')
+                - 'average': average of min and max rank positions
+                - 'min': lowest rank position
+                - 'max': highest rank position
+                - 'dense': like 'min' but ranks always increase by 1
+        """
+        self.features = features
+        self.suffix = suffix
+        self.method = method
+
+    def fit(self, X: pl.LazyFrame):
+        """Materialize sorted training values per feature for CDF-based ranking."""
+        self._sorted_values: Dict[str, np.ndarray] = {}
+
+        for f in self.features:
+            vals = (
+                X.select(pl.col(f).drop_nulls().sort())
+                .collect()
+                .to_series()
+                .to_numpy()
+            )
+            self._sorted_values[f] = vals
+
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Compute percentile rank [0, 1] relative to training distribution."""
+        for f in self.features:
+            out_col = f'{f}{self.suffix}'
+            sorted_vals = self._sorted_values[f]
+            n = len(sorted_vals)
+
+            if n == 0:
+                X = X.with_columns(pl.lit(None).cast(pl.Float64).alias(out_col))
+                continue
+
+            col_series = X.select(f).collect().to_series()
+            np_values = col_series.to_numpy()
+            null_mask = col_series.is_null().to_numpy()
+
+            if self.method == 'min':
+                ranks = np.searchsorted(sorted_vals, np_values, side='left')
+            elif self.method == 'max':
+                ranks = np.searchsorted(sorted_vals, np_values, side='right') - 1
+            elif self.method == 'dense':
+                unique_sorted = np.unique(sorted_vals)
+                ranks = np.searchsorted(unique_sorted, np_values, side='left')
+                n = len(unique_sorted)
+            else:  # 'average'
+                left = np.searchsorted(sorted_vals, np_values, side='left')
+                right = np.searchsorted(sorted_vals, np_values, side='right')
+                ranks = (left + right - 1) / 2.0
+
+            percentile_ranks = np.clip(ranks / max(n - 1, 1), 0.0, 1.0)
+
+            result = np.where(null_mask, np.nan, percentile_ranks)
+
+            X = X.with_columns(
+                pl.Series(name=out_col, values=result).cast(pl.Float64)
+            )
+
+        return X
 
 
 # ------------------------------------------------------------------------------------------
@@ -1265,3 +1599,122 @@ class GenerateLags(BaseTransformer):
             )
 
         return X
+
+
+# ------------------------------------------------------------------------------------------
+# Clustering
+# ------------------------------------------------------------------------------------------
+
+class KMeansCluster(BaseTransformer):
+    """Assign cluster labels using KMeans on selected features."""
+
+    def __init__(
+        self,
+        features: List[str],
+        num_clusters: int = 8,
+        new_feature: str = 'kmeans_cluster',
+        random_state: int = 42,
+    ):
+        """
+        Args:
+            features: Numeric columns to use for clustering
+            num_clusters: Number of clusters (default: 8)
+            new_feature: Name of the output cluster column (default: 'kmeans_cluster')
+            random_state: Random seed for reproducibility (default: 42)
+        """
+        self.features = features
+        self.num_clusters = num_clusters
+        self.new_feature = new_feature
+        self.random_state = random_state
+
+    def fit(self, X: pl.LazyFrame):
+        """Collect features to numpy, impute NaN with column means, fit KMeans."""
+        from sklearn.cluster import KMeans
+
+        data = X.select(self.features).collect().to_numpy().astype(np.float64)
+
+        # KMeans does not accept NaN; impute with column means
+        col_means = np.nanmean(data, axis=0)
+        nan_mask = np.isnan(data)
+        if np.any(nan_mask):
+            data[nan_mask] = np.take(col_means, np.where(nan_mask)[1])
+        self._col_means: np.ndarray = col_means
+
+        self._kmeans = KMeans(
+            n_clusters=self.num_clusters,
+            random_state=self.random_state,
+            n_init='auto',
+        )
+        self._kmeans.fit(data)
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Predict cluster labels and add as a new column."""
+        data = X.select(self.features).collect().to_numpy().astype(np.float64)
+
+        nan_mask = np.isnan(data)
+        if np.any(nan_mask):
+            data[nan_mask] = np.take(self._col_means, np.where(nan_mask)[1])
+
+        labels = self._kmeans.predict(data)
+
+        return X.with_columns(
+            pl.Series(name=self.new_feature, values=labels).cast(pl.Int32)
+        )
+
+
+# ------------------------------------------------------------------------------------------
+# Dimensionality Reduction
+# ------------------------------------------------------------------------------------------
+
+class PCATransformer(BaseTransformer):
+    """Reduce dimensionality using Principal Component Analysis."""
+
+    def __init__(
+        self,
+        features: List[str],
+        n_components: int = 2,
+        prefix: str = 'pc_',
+    ):
+        """
+        Args:
+            features: Numeric columns to use for PCA
+            n_components: Number of principal components to keep (default: 2)
+            prefix: Prefix for output column names (default: 'pc_')
+        """
+        self.features = features
+        self.n_components = n_components
+        self.prefix = prefix
+
+    def fit(self, X: pl.LazyFrame):
+        """Collect features to numpy, impute NaN with column means, fit PCA."""
+        from sklearn.decomposition import PCA
+
+        data = X.select(self.features).collect().to_numpy().astype(np.float64)
+
+        col_means = np.nanmean(data, axis=0)
+        nan_mask = np.isnan(data)
+        if np.any(nan_mask):
+            data[nan_mask] = np.take(col_means, np.where(nan_mask)[1])
+        self._col_means: np.ndarray = col_means
+
+        self._pca = PCA(n_components=self.n_components)
+        self._pca.fit(data)
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        """Transform features and add principal component columns."""
+        data = X.select(self.features).collect().to_numpy().astype(np.float64)
+
+        nan_mask = np.isnan(data)
+        if np.any(nan_mask):
+            data[nan_mask] = np.take(self._col_means, np.where(nan_mask)[1])
+
+        components = self._pca.transform(data)
+
+        pc_columns = [
+            pl.Series(name=f'{self.prefix}{i}', values=components[:, i])
+            for i in range(self.n_components)
+        ]
+
+        return X.with_columns(pc_columns)

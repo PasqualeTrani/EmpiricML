@@ -24,7 +24,10 @@ import numpy as np
 # internal imports 
 from empml.base import BaseTransformer, BaseEstimator, Metric # base classes 
 from empml.utils import log_execution_time, log_step, time_execution
-from empml.lab_utils import format_experiment_details
+from empml.lab_utils import (
+    format_experiment_details,
+    format_experiment_details_multi,
+)
 
 # streaming engine as the default for .collect()
 pl.Config.set_engine_affinity(engine='streaming')
@@ -457,15 +460,217 @@ def compare_results_stats(results_a : pl.DataFrame, results_b : pl.DataFrame, mi
     n_folds_lower_performance = fold_performances.filter(pl.col('relative_performance')<=0).shape[0] # for interrupting the results evaluation prematurely 
 
     return {
-        # cv aggregate stats - float/int values 
-        'mean_cv_performance' : mean_cv_performance, 
+        # cv aggregate stats - float/int values
+        'mean_cv_performance' : mean_cv_performance,
         'mean_cv_performance_overfitting' : mean_cv_performance_overfitting,
-        'std_cv_performance' : std_cv_performance, 
-        'n_folds_better_performance' : n_folds_better_performance, 
+        'std_cv_performance' : std_cv_performance,
+        'n_folds_better_performance' : n_folds_better_performance,
         'n_folds_lower_performance' : n_folds_lower_performance,
         'n_folds' : n_folds,
 
         # single fold stats - they are polars dataframes
-        'fold_performances' : fold_performances, 
+        'fold_performances' : fold_performances,
         'fold_performances_overfitting' : fold_performances_overfitting
     }
+
+
+# ------------------------------------------------------------------
+# MULTI-METRIC EVALUATION FUNCTIONS
+# ------------------------------------------------------------------
+
+def compute_scores(
+    data: pl.LazyFrame,
+    preds: np.ndarray,
+    metrics: List[Metric],
+    target: str,
+) -> List[float]:
+    """Compute multiple metric scores for predictions."""
+    data_with_preds = data.with_columns(
+        pl.Series(preds).alias('preds')
+    )
+    return [
+        m.compute_metric(
+            lf=data_with_preds, target=target, preds='preds'
+        )
+        for m in metrics
+    ]
+
+
+@log_execution_time
+def eval_pipeline_single_fold_multi(
+    pipeline: Pipeline,
+    train: pl.LazyFrame,
+    valid: pl.LazyFrame,
+    metrics: List[Metric],
+    target: str,
+    minimize: List[bool],
+    eval_overfitting: bool = True,
+    store_preds: bool = True,
+    verbose: bool = True,
+) -> Dict[str, Union[float, List[float]]]:
+    """
+    Evaluate pipeline on a single fold against multiple metrics.
+
+    Trains once, predicts once, then scores each metric.
+    Returns dict with suffixed keys (validation_score_1, etc.).
+    """
+    with log_step('Training', verbose):
+        _, duration_train = time_execution(
+            train_pipeline
+        )(pipeline, train)
+
+    with log_step('Inference', verbose):
+        preds, duration_inf = time_execution(
+            predict_with_pipeline
+        )(pipeline, valid)
+
+    scores = compute_scores(valid, preds, metrics, target)
+
+    result: Dict[str, Union[float, List[float]]] = {
+        'duration_train': duration_train,
+        'duration_inf': duration_inf,
+        'preds': list(preds) if store_preds else np.nan,
+    }
+
+    if eval_overfitting:
+        with log_step('Computing Overfitting', verbose):
+            train_preds = predict_with_pipeline(
+                pipeline, train
+            )
+            train_scores = compute_scores(
+                train, train_preds, metrics, target
+            )
+    else:
+        train_scores = [np.nan] * len(metrics)
+
+    for i, (score, t_score, mini) in enumerate(
+        zip(scores, train_scores, minimize), 1
+    ):
+        result[f'validation_score_{i}'] = score
+        result[f'train_score_{i}'] = t_score
+        if eval_overfitting:
+            result[f'overfitting_{i}'] = relative_performance(
+                mini, score, t_score
+            )
+        else:
+            result[f'overfitting_{i}'] = np.nan
+
+    return result
+
+
+def eval_pipeline_cv_multi(
+    pipeline: Pipeline,
+    lz: pl.LazyFrame,
+    cv_indexes: List[Tuple[np.ndarray, np.ndarray]],
+    row_id: str,
+    metrics: List[Metric],
+    target: str,
+    minimize: List[bool],
+    eval_overfitting: bool = True,
+    store_preds: bool = True,
+    verbose: bool = True,
+    compare_df: pl.DataFrame = pl.DataFrame(),
+    th_lower_performance_n_folds: int | None = None,
+) -> pl.DataFrame:
+    """
+    Evaluate pipeline in CV fashion for multiple metrics.
+
+    Early stopping arrests if ANY metric has too many
+    underperforming folds.
+    """
+    n_metrics = len(metrics)
+    fold_results = []
+
+    for fold, (train_idx, valid_idx) in enumerate(cv_indexes):
+        with log_step(f'Fold {fold+1}', verbose):
+            train = lz.filter(
+                pl.col(row_id).is_in(train_idx)
+            )
+            valid = lz.filter(
+                pl.col(row_id).is_in(valid_idx)
+            )
+            results = eval_pipeline_single_fold_multi(
+                pipeline=pipeline,
+                train=train,
+                valid=valid,
+                metrics=metrics,
+                target=target,
+                minimize=minimize,
+                eval_overfitting=eval_overfitting,
+                store_preds=store_preds,
+                verbose=verbose,
+            )
+            fold_results.append(results)
+
+            # Early stopping: arrest if ANY metric bad
+            if compare_df.shape[0] > 0:
+                partial_df = format_experiment_details_multi(
+                    pl.DataFrame(fold_results),
+                    experiment_id=None,
+                    n_metrics=n_metrics,
+                )
+                comparisons = compare_results_stats_multi(
+                    results_a=compare_df,
+                    results_b=partial_df,
+                    minimize=minimize,
+                    n_metrics=n_metrics,
+                )
+                should_stop = any(
+                    c['n_folds_lower_performance']
+                    > th_lower_performance_n_folds
+                    for c in comparisons
+                )
+                if should_stop:
+                    break
+
+    return pl.DataFrame(fold_results)
+
+
+def compare_results_stats_multi(
+    results_a: pl.DataFrame,
+    results_b: pl.DataFrame,
+    minimize: List[bool],
+    n_metrics: int,
+) -> List[Dict[str, Union[float, pl.DataFrame]]]:
+    """
+    Compare two experiments across multiple metrics.
+
+    Returns a list of comparison dicts (one per metric),
+    each with the same structure as compare_results_stats.
+    """
+    comparisons = []
+    for i in range(1, n_metrics + 1):
+        # Extract single-metric view for results_a
+        a_cols = {
+            f'validation_score_{i}': 'validation_score',
+            f'train_score_{i}': 'train_score',
+            f'overfitting_pct_{i}': 'overfitting_pct',
+        }
+        a_keep = ['fold_number', 'experiment_id'] + list(
+            a_cols.keys()
+        )
+        a_single = results_a.select(
+            [c for c in a_keep if c in results_a.columns]
+        ).rename(a_cols)
+
+        # Extract single-metric view for results_b
+        b_cols = {
+            f'validation_score_{i}': 'validation_score',
+            f'train_score_{i}': 'train_score',
+            f'overfitting_pct_{i}': 'overfitting_pct',
+        }
+        b_keep = ['fold_number', 'experiment_id'] + list(
+            b_cols.keys()
+        )
+        b_single = results_b.select(
+            [c for c in b_keep if c in results_b.columns]
+        ).rename(b_cols)
+
+        comparison = compare_results_stats(
+            results_a=a_single,
+            results_b=b_single,
+            minimize=minimize[i - 1],
+        )
+        comparisons.append(comparison)
+
+    return comparisons

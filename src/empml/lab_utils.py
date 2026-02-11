@@ -99,8 +99,65 @@ def create_results_details_schema() -> pl.DataFrame:
     )
 
 
+def create_results_schema_multi(
+    n_metrics: int,
+) -> pl.DataFrame:
+    """
+    Create empty schema for multi-metric experiment results.
+
+    Per-metric columns get _1, _2, ... suffixes. Shared columns
+    (timing, metadata) remain unsuffixed.
+
+    Args:
+        n_metrics: Number of metrics
+
+    Returns:
+        Empty DataFrame with multi-metric experiment columns
+    """
+    schema: Dict[str, pl.DataType] = {
+        'experiment_id': pl.Int64,
+        'name': pl.Utf8,
+        'description': pl.Utf8,
+    }
+    for i in range(1, n_metrics + 1):
+        schema[f'cv_mean_score_{i}'] = pl.Float64
+        schema[f'train_mean_score_{i}'] = pl.Float64
+        schema[f'mean_overfitting_pct_{i}'] = pl.Float64
+        schema[f'cv_std_score_{i}'] = pl.Float64
+    schema['mean_train_time_s'] = pl.Float64
+    schema['mean_inference_time_s'] = pl.Float64
+    schema['is_completed'] = pl.Boolean
+    schema['timestamp_utc'] = pl.Datetime
+    return pl.DataFrame(schema=schema)
+
+
+def create_results_details_schema_multi(
+    n_metrics: int,
+) -> pl.DataFrame:
+    """
+    Create empty schema for multi-metric per-fold details.
+
+    Per-metric columns get _1, _2, ... suffixes.
+
+    Args:
+        n_metrics: Number of metrics
+
+    Returns:
+        Empty DataFrame with multi-metric per-fold columns
+    """
+    schema: Dict[str, pl.DataType] = {
+        'experiment_id': pl.Int64,
+        'fold_number': pl.Int64,
+    }
+    for i in range(1, n_metrics + 1):
+        schema[f'validation_score_{i}'] = pl.Float64
+        schema[f'train_score_{i}'] = pl.Float64
+        schema[f'overfitting_pct_{i}'] = pl.Float64
+    return pl.DataFrame(schema=schema)
+
+
 # ------------------------------------------------------------------------------------------
-# Formatting results functions 
+# Formatting results functions
 # ------------------------------------------------------------------------------------------
 
 def format_experiment_results(
@@ -170,6 +227,107 @@ def format_experiment_details(eval: pl.DataFrame, experiment_id: int) -> pl.Data
             pl.lit(experiment_id).alias('experiment_id')
         )
         .rename({'overfitting': 'overfitting_pct'})
+    )
+
+
+def format_experiment_results_multi(
+    eval: pl.DataFrame,
+    experiment_id: int,
+    is_completed: bool,
+    n_metrics: int,
+    description: str = '',
+    name: str = '',
+) -> pl.DataFrame:
+    """
+    Aggregate multi-metric fold results into a summary row.
+
+    For each metric i, computes mean/std of validation_score_i,
+    train_score_i, overfitting_i into cv_mean_score_i, etc.
+
+    Args:
+        eval: DataFrame with per-fold multi-metric results
+        experiment_id: Unique identifier assigned by Lab
+        is_completed: Whether experiment completed all folds
+        n_metrics: Number of metrics
+        description: Human-readable experiment description
+        name: Short experiment name
+
+    Returns:
+        Single-row DataFrame matching create_results_schema_multi
+    """
+    # Build rename map and std columns
+    rename_map = {
+        'duration_train': 'mean_train_time_s',
+        'duration_inf': 'mean_inference_time_s',
+    }
+    for i in range(1, n_metrics + 1):
+        rename_map[f'validation_score_{i}'] = (
+            f'cv_mean_score_{i}'
+        )
+        rename_map[f'train_score_{i}'] = (
+            f'train_mean_score_{i}'
+        )
+        rename_map[f'overfitting_{i}'] = (
+            f'mean_overfitting_pct_{i}'
+        )
+
+    result = eval.drop('preds').mean().rename(rename_map)
+
+    # Add std columns per metric
+    std_cols = [
+        pl.lit(eval[f'validation_score_{i}'].std()).alias(
+            f'cv_std_score_{i}'
+        )
+        for i in range(1, n_metrics + 1)
+    ]
+    result = result.with_columns(std_cols)
+
+    # Add metadata
+    result = result.with_columns(
+        pl.lit(experiment_id).alias('experiment_id'),
+        pl.lit(description).alias('description'),
+        pl.lit(name).alias('name'),
+        pl.lit(is_completed).alias('is_completed'),
+        pl.lit(
+            datetime.now(pytz.timezone('UTC'))
+        ).dt.replace_time_zone(None).alias('timestamp_utc'),
+    )
+    return result
+
+
+def format_experiment_details_multi(
+    eval: pl.DataFrame,
+    experiment_id: int,
+    n_metrics: int,
+) -> pl.DataFrame:
+    """
+    Format multi-metric per-fold details.
+
+    Renames overfitting_i -> overfitting_pct_i, adds fold_number
+    and experiment_id columns.
+
+    Args:
+        eval: DataFrame with per-fold multi-metric results
+        experiment_id: Unique identifier assigned by Lab
+        n_metrics: Number of metrics
+
+    Returns:
+        DataFrame with one row per fold
+    """
+    rename_map = {
+        f'overfitting_{i}': f'overfitting_pct_{i}'
+        for i in range(1, n_metrics + 1)
+    }
+    return (
+        eval
+        .drop(['preds', 'duration_train', 'duration_inf'])
+        .with_row_index()
+        .rename({'index': 'fold_number'})
+        .with_columns(
+            pl.col('fold_number') + 1,
+            pl.lit(experiment_id).alias('experiment_id'),
+        )
+        .rename(rename_map)
     )
 
 
@@ -254,6 +412,35 @@ def log_performance_against(comparison: Dict[str, float], n_folds_threshold: int
     print(f'Mean % Overfitting Score Experiment B vs A: {format_log_performance(comparison['mean_cv_performance_overfitting'], 0)}')
     for row in comparison['fold_performances_overfitting'].iter_rows():
         print(f'\t - Fold {row[0]} % Overfitting Score Performance Experiment B vs A: {format_log_performance(row[1], 0)}')
+
+
+def log_performance_against_multi(
+    comparisons: List[Dict],
+    n_folds_threshold: int,
+    n_metrics: int,
+) -> None:
+    """
+    Print comparison report for each metric independently.
+
+    Iterates over comparison dicts and delegates per-metric
+    logging to log_performance_against.
+
+    Args:
+        comparisons: List of comparison dicts, one per metric
+        n_folds_threshold: Fold advantage threshold
+        n_metrics: Number of metrics
+    """
+    for i, comparison in enumerate(comparisons, 1):
+        print(
+            f"\n{BOLD}{BLUE}"
+            f"{'=' * 60}\n"
+            f"  Metric {i}\n"
+            f"{'=' * 60}{RESET}"
+        )
+        log_performance_against(
+            comparison=comparison,
+            n_folds_threshold=n_folds_threshold,
+        )
 
 
 def retrieve_predictions_from_path(lab_name: str, experiment_id: int) -> pl.Expr:
