@@ -2,43 +2,47 @@
 In this file there are all the base classes used in the other ones.
 """
 
-# standard import libraries 
-from dataclasses import dataclass 
+# standard import libraries
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import List, Tuple, Protocol, Any
+from typing import Any, Protocol
 
-# wranglers 
-import polars as pl 
-import numpy as np 
+import numpy as np
+
+# wranglers
+import polars as pl
 
 # streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine='streaming')
+pl.Config.set_engine_affinity(engine="streaming")
 
 # ------------------------------------------------------------------------------------------
-# Data Downloader 
+# Data Downloader
 # ------------------------------------------------------------------------------------------
+
 
 class DataDownloader(ABC):
     """Abstract class for downloading data into Polars LazyFrames."""
+
     @abstractmethod
     def get_data(self) -> pl.LazyFrame:
         pass
+
 
 # ------------------------------------------------------------------------------------------
 # CV Index Generator
 # ------------------------------------------------------------------------------------------
 
+
 class CVGenerator(ABC):
     @abstractmethod
-    def split(self, lf : pl.LazyFrame, row_id : str) -> List[Tuple[np.array]]:
+    def split(self, lf: pl.LazyFrame, row_id: str) -> list[tuple[np.array]]:
         """Generate a list of tuple with two elements: the first one is an array containing the row indexes for the train dataset, while the second contains the row indexes for the validation dataset"""
-        pass 
+        pass
 
 
 # ------------------------------------------------------------------------------------------
 # Performance Metric
 # ------------------------------------------------------------------------------------------
+
 
 class Metric(ABC):
     @abstractmethod
@@ -54,52 +58,55 @@ class Metric(ABC):
 # Transformer in Pipelines
 # ------------------------------------------------------------------------------------------
 
+
 class BaseTransformer(ABC):
     """Abstract base class for transformers that work with Polars LazyFrames."""
-    
+
     @abstractmethod
     def fit(self, lf: pl.LazyFrame):
         """Fit the transformer on the data."""
         pass
-    
+
     @abstractmethod
     def transform(self, lf: pl.LazyFrame) -> pl.LazyFrame:
         """Transform the data."""
         pass
-    
+
     def fit_transform(self, lf: pl.LazyFrame) -> pl.LazyFrame:
         """Fit and transform in one step."""
         self.fit(lf)
         return self.transform(lf)
-    
+
     def __repr__(self):
         """Return a string representation showing class name and key attributes."""
         class_name = self.__class__.__name__
-        
+
         # Get all instance attributes except private ones
-        attrs = {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
-        
+        attrs = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+
         if not attrs:
             return f"{class_name}()"
-        
+
         # Format attributes
         attrs_str = ", ".join([f"{k}={v!r}" for k, v in attrs.items()])
         return f"{class_name}({attrs_str})"
-    
+
 
 # ------------------------------------------------------------------------------------------
 # Estimator
 # ------------------------------------------------------------------------------------------
 
+
 class BaseEstimator(ABC):
     """Abstract base class for estimators that work with Polars LazyFrames."""
+
     @abstractmethod
-    def fit(self, df : pl.LazyFrame):
+    def fit(self, df: pl.LazyFrame):
         """Fit the estimator on the data."""
         pass
-    
+
     @abstractmethod
-    def predict(self, df : pl.LazyFrame):
+    def predict(self, df: pl.LazyFrame):
         """Predict by using the fitted estimator."""
         pass
 
@@ -108,13 +115,14 @@ class BaseEstimator(ABC):
 # SKlearn-like Estimator
 # ------------------------------------------------------------------------------------------
 
+
 class SKlearnEstimator(Protocol):
     """Protocol for sklearn-like estimators."""
-    
+
     def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> Any:
         """Fit the estimator."""
         ...
-    
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         """Make predictions."""
         ...
