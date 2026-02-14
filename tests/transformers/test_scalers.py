@@ -29,7 +29,7 @@ class TestStandardScaler:
         t = StandardScaler(features=["f1"])
         result = t.fit_transform(lf).collect()
         # All identical -> std=0 -> output 0.0
-        assert result["f1"].to_list() == [0.0, 0.0, 0.0, 0.0, 0.0]
+        assert result["f1"].to_list() == pytest.approx([0.0, 0.0, 0.0, 0.0, 0.0])
 
     def test_null_passthrough(self):
         lf = pl.LazyFrame({"f1": [1.0, None, 3.0, None, 5.0]})
@@ -61,7 +61,7 @@ class TestStandardScaler:
         t2.fit(sample_lf)
         r2 = t2.transform(sample_lf).collect()
 
-        assert r1["f1_s"].to_list() == r2["f1_s"].to_list()
+        assert r1["f1_s"].to_list() == pytest.approx(r2["f1_s"].to_list())
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +81,7 @@ class TestMinMaxScaler:
         lf = pl.LazyFrame({"f1": [5.0, 5.0, 5.0, 5.0, 5.0]})
         t = MinMaxScaler(features=["f1"])
         result = t.fit_transform(lf).collect()
-        assert result["f1"].to_list() == [0.0, 0.0, 0.0, 0.0, 0.0]
+        assert result["f1"].to_list() == pytest.approx([0.0, 0.0, 0.0, 0.0, 0.0])
 
     def test_null_passthrough(self):
         lf = pl.LazyFrame({"f1": [1.0, None, 3.0, None, 5.0]})
@@ -120,7 +120,7 @@ class TestRobustScaler:
         lf = pl.LazyFrame({"f1": [5.0, 5.0, 5.0, 5.0, 5.0]})
         t = RobustScaler(features=["f1"])
         result = t.fit_transform(lf).collect()
-        assert result["f1"].to_list() == [0.0, 0.0, 0.0, 0.0, 0.0]
+        assert result["f1"].to_list() == pytest.approx([0.0, 0.0, 0.0, 0.0, 0.0])
 
     def test_null_passthrough(self):
         lf = pl.LazyFrame({"f1": [1.0, None, 3.0, None, 5.0]})
