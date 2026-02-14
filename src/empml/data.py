@@ -1,54 +1,61 @@
 # standard import libraries
-from pathlib import Path
 from urllib.parse import quote_plus
 
-# wranglers 
-import polars as pl  
+# wranglers
+import polars as pl
+
+from empml.base import DataDownloader  # base class
 
 # internal imports
 from empml.utils import log_execution_time
-from empml.base import DataDownloader # base class 
 
 # streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine='streaming')
+pl.Config.set_engine_affinity(engine="streaming")
 
 # ------------------------------------------------------------------------------------------
 # Implementations of the DataDownloader base class
 # ------------------------------------------------------------------------------------------
 
+
 class CSVDownloader(DataDownloader):
     """Class for reading a CSV file and returns a Polars LazyFrame."""
-    def __init__(self, path : str, separator : str = ';'):
+
+    def __init__(self, path: str, separator: str = ";"):
         self.path = path
         self.separator = separator
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.scan_csv(self.path, separator = self.separator) 
-    
+        return pl.scan_csv(self.path, separator=self.separator)
+
+
 class ParquetDownloader(DataDownloader):
     """Class for reading a Parquet file and returns a Polars LazyFrame."""
-    def __init__(self, path : str):
+
+    def __init__(self, path: str):
         self.path = path
-        
+
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.scan_parquet(self.path) 
-    
+        return pl.scan_parquet(self.path)
+
+
 class ExcelDownloader(DataDownloader):
     """Class for reading an Excel file and returns a Polars LazyFrame."""
-    def __init__(self, path : str, sheet_name : str | None = None):
+
+    def __init__(self, path: str, sheet_name: str | None = None):
         self.path = path
         self.sheet_name = sheet_name
-        
+
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_excel(self.path, sheet_name = self.sheet_name).lazy()
+        return pl.read_excel(self.path, sheet_name=self.sheet_name).lazy()
 
 
 # ------------------------------------------------------------------------------------------
 # SQL Database downloaders (connectorx-based)
 # ------------------------------------------------------------------------------------------
+
 
 class SQLDownloader(DataDownloader):
     """Class for reading data from any SQL database via connection URI.
@@ -68,9 +75,7 @@ class SQLDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class PostgreSQLDownloader(DataDownloader):
@@ -98,9 +103,7 @@ class PostgreSQLDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class MySQLDownloader(DataDownloader):
@@ -128,9 +131,7 @@ class MySQLDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class MSSQLDownloader(DataDownloader):
@@ -160,9 +161,7 @@ class MSSQLDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class SQLiteDownloader(DataDownloader):
@@ -178,9 +177,7 @@ class SQLiteDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class OracleDownloader(DataDownloader):
@@ -208,14 +205,13 @@ class OracleDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 # ------------------------------------------------------------------------------------------
 # Cloud Data Warehouse downloaders
 # ------------------------------------------------------------------------------------------
+
 
 class RedshiftDownloader(DataDownloader):
     """Class for reading data from Amazon Redshift
@@ -242,9 +238,7 @@ class RedshiftDownloader(DataDownloader):
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(
-            self.query, self.connection_uri
-        ).lazy()
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class BigQueryDownloader(DataDownloader):
@@ -274,19 +268,15 @@ class BigQueryDownloader(DataDownloader):
                 "google-cloud-bigquery is required for "
                 "BigQueryDownloader. Install it with: "
                 "pip install google-cloud-bigquery"
-            )
+            ) from None
 
         if self.credentials_path:
-            client = (
-                bigquery.Client.from_service_account_json(
-                    self.credentials_path,
-                    project=self.project_id,
-                )
+            client = bigquery.Client.from_service_account_json(
+                self.credentials_path,
+                project=self.project_id,
             )
         else:
-            client = bigquery.Client(
-                project=self.project_id
-            )
+            client = bigquery.Client(project=self.project_id)
 
         arrow_table = client.query(self.query).to_arrow()
         return pl.from_arrow(arrow_table).lazy()
@@ -327,7 +317,7 @@ class SnowflakeDownloader(DataDownloader):
                 "snowflake-connector-python is required "
                 "for SnowflakeDownloader. Install it with:"
                 " pip install snowflake-connector-python"
-            )
+            ) from None
 
         conn = snowflake.connector.connect(
             account=self.account,
@@ -376,7 +366,7 @@ class DatabricksDownloader(DataDownloader):
                 "databricks-sql-connector is required "
                 "for DatabricksDownloader. Install it "
                 "with: pip install databricks-sql-connector"
-            )
+            ) from None
 
         conn = databricks_sql.connect(
             server_hostname=self.server_hostname,

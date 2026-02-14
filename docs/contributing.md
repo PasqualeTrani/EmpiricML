@@ -32,32 +32,37 @@ EmpiricML is built to be modular and extensible. You can easily plug in new comp
 
 ### Data Downloaders
 
-If you need to load data from sources not currently supported (e.g., **S3**, **PostgreSQL**, **Amazon Redshift**, **SharePoint**, etc.), you can create a custom downloader by extending the `DataDownloader` class.
+If you need to load data from sources not currently supported (e.g., **S3**, **REST APIs**, **SharePoint**, etc.), you can create a custom downloader by extending the `DataDownloader` class.
+
+EmpiricML already includes built-in downloaders for files (CSV, Parquet, Excel), SQL databases (PostgreSQL, MySQL, MSSQL, SQLite, Oracle), and cloud warehouses (Redshift, BigQuery, Snowflake, Databricks). See [`empml.data`](api/data.md) for the full list.
 
 You need to implement the `get_data` method, which must return a `polars.LazyFrame`.
 
-#### Example: Creating a PostgreSQL Downloader
+#### Example: Creating a REST API Downloader
 
 ```python
 import polars as pl
 from empml.base import DataDownloader
 
-class PostgresDownloader(DataDownloader):
+class RestAPIDownloader(DataDownloader):
     """
-    Custom downloader for PostgreSQL databases.
+    Custom downloader that fetches data from a REST API endpoint.
     """
-    def __init__(self, connection_uri: str, query: str):
-        self.connection_uri = connection_uri
-        self.query = query
+    def __init__(self, url: str, headers: dict | None = None):
+        self.url = url
+        self.headers = headers or {}
 
     def get_data(self) -> pl.LazyFrame:
         """
-        Reads data from PostgreSQL and returns a Polars LazyFrame.
+        Fetches JSON data from a REST API and returns a Polars LazyFrame.
         """
-        return pl.read_database_uri(
-            query=self.query,
-            uri=self.connection_uri
-        ).lazy()
+        import requests
+
+        response = requests.get(self.url, headers=self.headers)
+        response.raise_for_status()
+        data = response.json()
+
+        return pl.DataFrame(data).lazy()
 ```
 
 ### Transformers

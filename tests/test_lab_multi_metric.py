@@ -10,38 +10,32 @@ Covers:
 - show_best_score with metric_idx
 """
 
-import pytest
-import polars as pl
 import numpy as np
-from unittest.mock import patch
+import polars as pl
+import pytest
 
-from empml.base import DataDownloader, CVGenerator, Metric
-from empml.metrics import MSE, MAE
-from empml.pipeline import (
-    Pipeline,
-    compute_scores,
-    eval_pipeline_single_fold_multi,
-    eval_pipeline_cv_multi,
-    compare_results_stats,
-    compare_results_stats_multi,
-    relative_performance,
-)
+from empml.base import CVGenerator, DataDownloader
+from empml.lab import ComparisonCriteria, Lab
 from empml.lab_utils import (
+    create_results_details_schema_multi,
     create_results_schema,
     create_results_schema_multi,
-    create_results_details_schema,
-    create_results_details_schema_multi,
-    format_experiment_results_multi,
     format_experiment_details_multi,
-    log_performance_against_multi,
+    format_experiment_results_multi,
 )
-from empml.lab import Lab, ComparisonCriteria
+from empml.metrics import MAE, MSE
+from empml.pipeline import (
+    Pipeline,
+    compare_results_stats_multi,
+    compute_scores,
+    eval_pipeline_single_fold_multi,
+)
 from empml.wrappers import SKlearnWrapper
-
 
 # ------------------------------------------------------------------
 # Test fixtures
 # ------------------------------------------------------------------
+
 
 class MockDownloader(DataDownloader):
     """Return a small dataset for testing."""
@@ -75,15 +69,14 @@ def _make_train_lf() -> pl.LazyFrame:
     n = 20
     f1 = np.random.randn(n).tolist()
     f2 = np.random.randn(n).tolist()
-    target = [
-        f1[i] * 2 + f2[i] + np.random.randn() * 0.1
-        for i in range(n)
-    ]
-    return pl.LazyFrame({
-        'f1': f1,
-        'f2': f2,
-        'target': target,
-    })
+    target = [f1[i] * 2 + f2[i] + np.random.randn() * 0.1 for i in range(n)]
+    return pl.LazyFrame(
+        {
+            "f1": f1,
+            "f2": f2,
+            "target": target,
+        }
+    )
 
 
 def _make_lab(
@@ -94,9 +87,7 @@ def _make_lab(
     lf = _make_train_lf()
     downloader = MockDownloader(lf)
     cv = MockCVGenerator()
-    criteria = ComparisonCriteria(
-        n_folds_threshold=1, pct_threshold=0.0
-    )
+    criteria = ComparisonCriteria(n_folds_threshold=1, pct_threshold=0.0)
     if multi_metric:
         metric = [MSE(), MAE()]
         if isinstance(minimize, bool):
@@ -107,7 +98,7 @@ def _make_lab(
         train_downloader=downloader,
         metric=metric,
         cv_generator=cv,
-        target='target',
+        target="target",
         comparison_criteria=criteria,
         minimize=minimize,
     )
@@ -119,14 +110,17 @@ def _make_simple_pipeline(lab: Lab) -> Pipeline:
 
     return Pipeline(
         steps=[
-            ('model', SKlearnWrapper(
-                estimator=LinearRegression(),
-                features=['f1', 'f2'],
-                target=lab.target,
-            )),
+            (
+                "model",
+                SKlearnWrapper(
+                    estimator=LinearRegression(),
+                    features=["f1", "f2"],
+                    target=lab.target,
+                ),
+            ),
         ],
-        name='lr_test',
-        description='test pipeline',
+        name="lr_test",
+        description="test pipeline",
     )
 
 
@@ -134,116 +128,127 @@ def _make_simple_pipeline(lab: Lab) -> Pipeline:
 # Unit tests: lab_utils.py
 # ------------------------------------------------------------------
 
-class TestMultiMetricSchemas:
 
+class TestMultiMetricSchemas:
     def test_create_results_schema_multi_columns(self):
         """Verify multi-metric results schema has correct columns."""
         schema = create_results_schema_multi(2)
         cols = schema.columns
         # Per-metric columns
-        assert 'cv_mean_score_1' in cols
-        assert 'cv_mean_score_2' in cols
-        assert 'train_mean_score_1' in cols
-        assert 'train_mean_score_2' in cols
-        assert 'mean_overfitting_pct_1' in cols
-        assert 'cv_std_score_1' in cols
-        assert 'cv_std_score_2' in cols
+        assert "cv_mean_score_1" in cols
+        assert "cv_mean_score_2" in cols
+        assert "train_mean_score_1" in cols
+        assert "train_mean_score_2" in cols
+        assert "mean_overfitting_pct_1" in cols
+        assert "cv_std_score_1" in cols
+        assert "cv_std_score_2" in cols
         # Shared columns
-        assert 'experiment_id' in cols
-        assert 'mean_train_time_s' in cols
-        assert 'is_completed' in cols
-        assert 'timestamp_utc' in cols
+        assert "experiment_id" in cols
+        assert "mean_train_time_s" in cols
+        assert "is_completed" in cols
+        assert "timestamp_utc" in cols
 
     def test_create_results_details_schema_multi_columns(self):
         """Verify multi-metric details schema has correct columns."""
         schema = create_results_details_schema_multi(2)
         cols = schema.columns
-        assert 'validation_score_1' in cols
-        assert 'validation_score_2' in cols
-        assert 'train_score_1' in cols
-        assert 'overfitting_pct_1' in cols
-        assert 'experiment_id' in cols
-        assert 'fold_number' in cols
+        assert "validation_score_1" in cols
+        assert "validation_score_2" in cols
+        assert "train_score_1" in cols
+        assert "overfitting_pct_1" in cols
+        assert "experiment_id" in cols
+        assert "fold_number" in cols
 
     def test_single_metric_schema_unchanged(self):
         """Verify single-metric schema is not affected."""
         schema = create_results_schema()
         cols = schema.columns
-        assert 'cv_mean_score' in cols
-        assert 'cv_mean_score_1' not in cols
+        assert "cv_mean_score" in cols
+        assert "cv_mean_score_1" not in cols
 
     def test_create_results_schema_multi_3_metrics(self):
         """Verify schema with 3 metrics has _1, _2, _3 columns."""
         schema = create_results_schema_multi(3)
         cols = schema.columns
-        assert 'cv_mean_score_3' in cols
-        assert 'cv_std_score_3' in cols
+        assert "cv_mean_score_3" in cols
+        assert "cv_std_score_3" in cols
 
 
 class TestMultiMetricFormatting:
-
     def test_format_experiment_results_multi(self):
         """Verify multi-metric results are aggregated correctly."""
-        eval_df = pl.DataFrame({
-            'validation_score_1': [0.5, 0.6, 0.7],
-            'validation_score_2': [1.0, 1.2, 0.8],
-            'train_score_1': [0.3, 0.4, 0.5],
-            'train_score_2': [0.7, 0.8, 0.6],
-            'overfitting_1': [10.0, 8.0, 6.0],
-            'overfitting_2': [5.0, 4.0, 3.0],
-            'duration_train': [1.0, 1.1, 0.9],
-            'duration_inf': [0.1, 0.12, 0.08],
-            'preds': [[1.0], [2.0], [3.0]],
-        })
+        eval_df = pl.DataFrame(
+            {
+                "validation_score_1": [0.5, 0.6, 0.7],
+                "validation_score_2": [1.0, 1.2, 0.8],
+                "train_score_1": [0.3, 0.4, 0.5],
+                "train_score_2": [0.7, 0.8, 0.6],
+                "overfitting_1": [10.0, 8.0, 6.0],
+                "overfitting_2": [5.0, 4.0, 3.0],
+                "duration_train": [1.0, 1.1, 0.9],
+                "duration_inf": [0.1, 0.12, 0.08],
+                "preds": [[1.0], [2.0], [3.0]],
+            }
+        )
         result = format_experiment_results_multi(
-            eval_df, experiment_id=1, is_completed=True,
-            n_metrics=2, description='test', name='test',
+            eval_df,
+            experiment_id=1,
+            is_completed=True,
+            n_metrics=2,
+            description="test",
+            name="test",
         )
         assert result.height == 1
-        assert 'cv_mean_score_1' in result.columns
-        assert 'cv_mean_score_2' in result.columns
-        assert 'cv_std_score_1' in result.columns
+        assert "cv_mean_score_1" in result.columns
+        assert "cv_mean_score_2" in result.columns
+        assert "cv_std_score_1" in result.columns
         # Check mean computation
-        assert abs(result['cv_mean_score_1'].item() - 0.6) < 1e-6
-        assert abs(result['cv_mean_score_2'].item() - 1.0) < 1e-6
+        assert abs(result["cv_mean_score_1"].item() - 0.6) < 1e-6
+        assert abs(result["cv_mean_score_2"].item() - 1.0) < 1e-6
 
     def test_format_experiment_details_multi(self):
         """Verify multi-metric details are formatted correctly."""
-        eval_df = pl.DataFrame({
-            'validation_score_1': [0.5, 0.6],
-            'validation_score_2': [1.0, 1.2],
-            'train_score_1': [0.3, 0.4],
-            'train_score_2': [0.7, 0.8],
-            'overfitting_1': [10.0, 8.0],
-            'overfitting_2': [5.0, 4.0],
-            'duration_train': [1.0, 1.1],
-            'duration_inf': [0.1, 0.12],
-            'preds': [[1.0], [2.0]],
-        })
+        eval_df = pl.DataFrame(
+            {
+                "validation_score_1": [0.5, 0.6],
+                "validation_score_2": [1.0, 1.2],
+                "train_score_1": [0.3, 0.4],
+                "train_score_2": [0.7, 0.8],
+                "overfitting_1": [10.0, 8.0],
+                "overfitting_2": [5.0, 4.0],
+                "duration_train": [1.0, 1.1],
+                "duration_inf": [0.1, 0.12],
+                "preds": [[1.0], [2.0]],
+            }
+        )
         result = format_experiment_details_multi(
-            eval_df, experiment_id=1, n_metrics=2,
+            eval_df,
+            experiment_id=1,
+            n_metrics=2,
         )
         assert result.height == 2
-        assert 'overfitting_pct_1' in result.columns
-        assert 'overfitting_pct_2' in result.columns
-        assert 'overfitting_1' not in result.columns
+        assert "overfitting_pct_1" in result.columns
+        assert "overfitting_pct_2" in result.columns
+        assert "overfitting_1" not in result.columns
         # fold_number should be 1-indexed
-        assert result['fold_number'].to_list() == [1, 2]
+        assert result["fold_number"].to_list() == [1, 2]
 
 
 # ------------------------------------------------------------------
 # Unit tests: pipeline.py
 # ------------------------------------------------------------------
 
-class TestMultiMetricPipeline:
 
+class TestMultiMetricPipeline:
     def test_compute_scores(self):
         """compute_scores returns a float per metric."""
-        lf = pl.LazyFrame({
-            'target': [1.0, 2.0, 3.0],
-        })
+        lf = pl.LazyFrame(
+            {
+                "target": [1.0, 2.0, 3.0],
+            }
+        )
         preds = np.array([1.1, 2.2, 2.8])
-        scores = compute_scores(lf, preds, [MSE(), MAE()], 'target')
+        scores = compute_scores(lf, preds, [MSE(), MAE()], "target")
         assert len(scores) == 2
         assert all(isinstance(s, float) for s in scores)
         # MSE should be different from MAE
@@ -255,76 +260,79 @@ class TestMultiMetricPipeline:
         pipe = _make_simple_pipeline(lab)
 
         train_idx, valid_idx = lab.cv_indexes[0]
-        train = lab.train.filter(
-            pl.col(lab.row_id).is_in(train_idx)
-        )
-        valid = lab.train.filter(
-            pl.col(lab.row_id).is_in(valid_idx)
-        )
+        train = lab.train.filter(pl.col(lab.row_id).is_in(train_idx))
+        valid = lab.train.filter(pl.col(lab.row_id).is_in(valid_idx))
         result = eval_pipeline_single_fold_multi(
             pipeline=pipe,
             train=train,
             valid=valid,
             metrics=[MSE(), MAE()],
-            target='target',
+            target="target",
             minimize=[True, True],
             verbose=False,
         )
-        assert 'validation_score_1' in result
-        assert 'validation_score_2' in result
-        assert 'train_score_1' in result
-        assert 'train_score_2' in result
-        assert 'overfitting_1' in result
-        assert 'overfitting_2' in result
-        assert 'preds' in result
-        assert 'duration_train' in result
+        assert "validation_score_1" in result
+        assert "validation_score_2" in result
+        assert "train_score_1" in result
+        assert "train_score_2" in result
+        assert "overfitting_1" in result
+        assert "overfitting_2" in result
+        assert "preds" in result
+        assert "duration_train" in result
 
     def test_compare_results_stats_multi(self):
         """compare_results_stats_multi returns one dict per metric."""
-        a = pl.DataFrame({
-            'fold_number': [1, 2],
-            'experiment_id': [1, 1],
-            'validation_score_1': [0.5, 0.6],
-            'train_score_1': [0.3, 0.4],
-            'overfitting_pct_1': [10.0, 8.0],
-            'validation_score_2': [1.0, 1.1],
-            'train_score_2': [0.7, 0.8],
-            'overfitting_pct_2': [5.0, 4.0],
-        })
-        b = pl.DataFrame({
-            'fold_number': [1, 2],
-            'experiment_id': [2, 2],
-            'validation_score_1': [0.4, 0.5],
-            'train_score_1': [0.2, 0.3],
-            'overfitting_pct_1': [9.0, 7.0],
-            'validation_score_2': [0.9, 1.0],
-            'train_score_2': [0.6, 0.7],
-            'overfitting_pct_2': [4.0, 3.0],
-        })
+        a = pl.DataFrame(
+            {
+                "fold_number": [1, 2],
+                "experiment_id": [1, 1],
+                "validation_score_1": [0.5, 0.6],
+                "train_score_1": [0.3, 0.4],
+                "overfitting_pct_1": [10.0, 8.0],
+                "validation_score_2": [1.0, 1.1],
+                "train_score_2": [0.7, 0.8],
+                "overfitting_pct_2": [5.0, 4.0],
+            }
+        )
+        b = pl.DataFrame(
+            {
+                "fold_number": [1, 2],
+                "experiment_id": [2, 2],
+                "validation_score_1": [0.4, 0.5],
+                "train_score_1": [0.2, 0.3],
+                "overfitting_pct_1": [9.0, 7.0],
+                "validation_score_2": [0.9, 1.0],
+                "train_score_2": [0.6, 0.7],
+                "overfitting_pct_2": [4.0, 3.0],
+            }
+        )
         comparisons = compare_results_stats_multi(
-            a, b, minimize=[True, True], n_metrics=2,
+            a,
+            b,
+            minimize=[True, True],
+            n_metrics=2,
         )
         assert len(comparisons) == 2
         for c in comparisons:
-            assert 'mean_cv_performance' in c
-            assert 'n_folds_lower_performance' in c
-            assert 'fold_performances' in c
+            assert "mean_cv_performance" in c
+            assert "n_folds_lower_performance" in c
+            assert "fold_performances" in c
 
 
 # ------------------------------------------------------------------
 # Integration tests: Lab class
 # ------------------------------------------------------------------
 
-class TestLabInit:
 
+class TestLabInit:
     def test_single_metric_unchanged(self):
         """Single metric Lab behaves exactly as before."""
         lab = _make_lab(multi_metric=False)
         assert lab._multi_metric is False
         assert lab.n_metrics == 1
         assert isinstance(lab.metric, MSE)
-        assert 'cv_mean_score' in lab.results.columns
-        assert 'cv_mean_score_1' not in lab.results.columns
+        assert "cv_mean_score" in lab.results.columns
+        assert "cv_mean_score_1" not in lab.results.columns
 
     def test_multi_metric_init(self):
         """Multi metric Lab sets correct attributes."""
@@ -333,8 +341,8 @@ class TestLabInit:
         assert lab.n_metrics == 2
         assert len(lab.metrics) == 2
         assert len(lab.minimize_list) == 2
-        assert 'cv_mean_score_1' in lab.results.columns
-        assert 'cv_mean_score_2' in lab.results.columns
+        assert "cv_mean_score_1" in lab.results.columns
+        assert "cv_mean_score_2" in lab.results.columns
 
     def test_minimize_mismatch_raises(self):
         """Mismatched minimize list length raises ValueError."""
@@ -344,9 +352,10 @@ class TestLabInit:
                 train_downloader=MockDownloader(lf),
                 metric=[MSE(), MAE()],
                 cv_generator=MockCVGenerator(),
-                target='target',
+                target="target",
                 comparison_criteria=ComparisonCriteria(
-                    n_folds_threshold=1, pct_threshold=0.0,
+                    n_folds_threshold=1,
+                    pct_threshold=0.0,
                 ),
                 minimize=[True, True, True],
             )
@@ -358,7 +367,6 @@ class TestLabInit:
 
 
 class TestLabRunExperiment:
-
     def test_run_experiment_multi_metric(self):
         """Run experiment with multi-metric updates results."""
         lab = _make_lab(multi_metric=True)
@@ -367,10 +375,10 @@ class TestLabRunExperiment:
 
         assert lab.results.height == 1
         row = lab.results.row(0, named=True)
-        assert 'cv_mean_score_1' in row
-        assert 'cv_mean_score_2' in row
-        assert row['cv_mean_score_1'] is not None
-        assert row['cv_mean_score_2'] is not None
+        assert "cv_mean_score_1" in row
+        assert "cv_mean_score_2" in row
+        assert row["cv_mean_score_1"] is not None
+        assert row["cv_mean_score_2"] is not None
 
     def test_run_experiment_single_unchanged(self):
         """Single metric run_experiment still works identically."""
@@ -380,8 +388,8 @@ class TestLabRunExperiment:
 
         assert lab.results.height == 1
         row = lab.results.row(0, named=True)
-        assert 'cv_mean_score' in row
-        assert row['cv_mean_score'] is not None
+        assert "cv_mean_score" in row
+        assert row["cv_mean_score"] is not None
 
     def test_run_experiment_details_multi_metric(self):
         """Multi-metric details table has correct structure."""
@@ -391,27 +399,24 @@ class TestLabRunExperiment:
 
         details = lab.results_details
         assert details.height == 2  # 2 folds
-        assert 'validation_score_1' in details.columns
-        assert 'validation_score_2' in details.columns
-        assert 'overfitting_pct_1' in details.columns
+        assert "validation_score_1" in details.columns
+        assert "validation_score_2" in details.columns
+        assert "overfitting_pct_1" in details.columns
 
     def test_multi_experiment_comparison(self):
         """Two multi-metric experiments can be compared."""
         lab = _make_lab(multi_metric=True)
         pipe1 = _make_simple_pipeline(lab)
         pipe2 = _make_simple_pipeline(lab)
-        pipe2.name = 'lr_test_2'
+        pipe2.name = "lr_test_2"
 
         lab.run_experiment(pipe1, verbose=False)
-        lab.run_experiment(
-            pipe2, verbose=False, compare_against=1
-        )
+        lab.run_experiment(pipe2, verbose=False, compare_against=1)
 
         assert lab.results.height == 2
 
 
 class TestLabComparison:
-
     def test_best_experiment_all_better(self):
         """Best experiment updated when B better on all metrics."""
         lab = _make_lab(multi_metric=True)
@@ -421,24 +426,25 @@ class TestLabComparison:
 
         # Run same pipeline again (should be comparable)
         pipe2 = _make_simple_pipeline(lab)
-        pipe2.name = 'lr_2'
+        pipe2.name = "lr_2"
         lab.run_experiment(
-            pipe2, verbose=False,
-            compare_against=1, auto_mode=True,
+            pipe2,
+            verbose=False,
+            compare_against=1,
+            auto_mode=True,
         )
         # Best should still be set (either 1 or 2)
         assert lab.best_experiment is not None
 
 
 class TestLabHPO:
-
     def test_hpo_primary_metric_idx_out_of_range(self):
         """Invalid primary_metric_idx raises ValueError."""
         lab = _make_lab(multi_metric=True)
         with pytest.raises(ValueError, match="out of range"):
             lab.hpo(
-                features=['f1', 'f2'],
-                params_list={'n_jobs': [1]},
+                features=["f1", "f2"],
+                params_list={"n_jobs": [1]},
                 estimator=_get_lr_class(),
                 primary_metric_idx=5,
                 verbose=False,
@@ -449,30 +455,30 @@ class TestLabHPO:
         lab = _make_lab(multi_metric=True)
         with pytest.raises(ValueError, match="must be int"):
             lab.hpo(
-                features=['f1', 'f2'],
-                params_list={'n_jobs': [1]},
+                features=["f1", "f2"],
+                params_list={"n_jobs": [1]},
                 estimator=_get_lr_class(),
-                primary_metric_idx='first',
+                primary_metric_idx="first",
                 verbose=False,
             )
 
     def test_hpo_primary_metric_idx_all_warns(self, caplog):
         """primary_metric_idx='all' emits a warning."""
         import logging
+
         lab = _make_lab(multi_metric=True)
         with caplog.at_level(logging.WARNING):
             lab.hpo(
-                features=['f1', 'f2'],
-                params_list={'n_jobs': [1]},
+                features=["f1", "f2"],
+                params_list={"n_jobs": [1]},
                 estimator=_get_lr_class(),
-                primary_metric_idx='all',
+                primary_metric_idx="all",
                 verbose=False,
             )
         assert "primary_metric_idx='all'" in caplog.text
 
 
 class TestLabShowBestScore:
-
     def test_show_best_score_single(self):
         """show_best_score works for single metric."""
         lab = _make_lab(multi_metric=False)
@@ -480,7 +486,7 @@ class TestLabShowBestScore:
         lab.run_experiment(pipe, verbose=False)
         result = lab.show_best_score()
         assert result.height == 1
-        assert 'cv_mean_score' in result.columns
+        assert "cv_mean_score" in result.columns
 
     def test_show_best_score_multi_default(self):
         """show_best_score works for multi-metric with default."""
@@ -503,7 +509,9 @@ class TestLabShowBestScore:
 # Helpers
 # ------------------------------------------------------------------
 
+
 def _get_lr_class():
     """Return LinearRegression class for HPO tests."""
     from sklearn.linear_model import LinearRegression
+
     return LinearRegression

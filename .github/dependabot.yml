@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # pip dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "python"
+    ignore:
+      # Ignore major version bumps for core ML libraries
+      # (these may have breaking API changes)
+      - dependency-name: "scikit-learn"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "lightgbm"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "xgboost"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "catboost"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "polars"
+        update-types: ["version-update:semver-major"]
