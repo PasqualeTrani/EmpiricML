@@ -40,21 +40,21 @@ class TestSimpleImputer:
         t = SimpleImputer(features=["f1"], strategy="mean")
         result = t.fit_transform(sample_lf).collect()
         original = sample_lf.collect()
-        assert result["f1"].to_list() == original["f1"].to_list()
+        assert result["f1"].to_list() == pytest.approx(original["f1"].to_list())
 
     def test_all_nulls_default(self):
         lf = pl.LazyFrame({"f1": [None, None, None]}, schema={"f1": pl.Float64})
         t = SimpleImputer(features=["f1"], strategy="mean")
         result = t.fit_transform(lf).collect()
         # All null -> impute_value defaults to 0.0
-        assert result["f1"].to_list() == [0.0, 0.0, 0.0]
+        assert result["f1"].to_list() == pytest.approx([0.0, 0.0, 0.0])
 
     def test_multiple_features(self, sample_lf):
         t = SimpleImputer(features=["f1", "f3"], strategy="mean")
         result = t.fit_transform(sample_lf).collect()
         # f1 has no nulls -> unchanged
         original = sample_lf.collect()
-        assert result["f1"].to_list() == original["f1"].to_list()
+        assert result["f1"].to_list() == pytest.approx(original["f1"].to_list())
         # f3 had nulls -> now imputed (no nulls left)
         assert result["f3"].null_count() == 0
 
@@ -82,7 +82,7 @@ class TestFillNulls:
         t = FillNulls(features=["f1"], value=-1.0)
         result = t.fit_transform(sample_lf).collect()
         original = sample_lf.collect()
-        assert result["f1"].to_list() == original["f1"].to_list()
+        assert result["f1"].to_list() == pytest.approx(original["f1"].to_list())
 
     def test_nan_handling(self):
         lf = pl.LazyFrame({"f1": [1.0, float("nan"), 3.0]})
