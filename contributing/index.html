@@ -947,10 +947,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-creating-a-postgresql-downloader" class="md-nav__link">
+  <a href="#example-creating-a-rest-api-downloader" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example: Creating a PostgreSQL Downloader
+        Example: Creating a REST API Downloader
       
     </span>
   </a>
@@ -1093,10 +1093,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#example-creating-a-postgresql-downloader" class="md-nav__link">
+  <a href="#example-creating-a-rest-api-downloader" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example: Creating a PostgreSQL Downloader
+        Example: Creating a REST API Downloader
       
     </span>
   </a>
@@ -1193,28 +1193,32 @@
 <h2 id="2-extending-classes">2. Extending Classes<a class="headerlink" href="#2-extending-classes" title="Permanent link">&para;</a></h2>
 <p>EmpiricML is built to be modular and extensible. You can easily plug in new components by inheriting from the base classes defined in <code>empml.base</code>.</p>
 <h3 id="data-downloaders">Data Downloaders<a class="headerlink" href="#data-downloaders" title="Permanent link">&para;</a></h3>
-<p>If you need to load data from sources not currently supported (e.g., <strong>S3</strong>, <strong>PostgreSQL</strong>, <strong>Amazon Redshift</strong>, <strong>SharePoint</strong>, etc.), you can create a custom downloader by extending the <code>DataDownloader</code> class.</p>
+<p>If you need to load data from sources not currently supported (e.g., <strong>S3</strong>, <strong>REST APIs</strong>, <strong>SharePoint</strong>, etc.), you can create a custom downloader by extending the <code>DataDownloader</code> class.</p>
+<p>EmpiricML already includes built-in downloaders for files (CSV, Parquet, Excel), SQL databases (PostgreSQL, MySQL, MSSQL, SQLite, Oracle), and cloud warehouses (Redshift, BigQuery, Snowflake, Databricks). See <a href="../api/data/"><code>empml.data</code></a> for the full list.</p>
 <p>You need to implement the <code>get_data</code> method, which must return a <code>polars.LazyFrame</code>.</p>
-<h4 id="example-creating-a-postgresql-downloader">Example: Creating a PostgreSQL Downloader<a class="headerlink" href="#example-creating-a-postgresql-downloader" title="Permanent link">&para;</a></h4>
+<h4 id="example-creating-a-rest-api-downloader">Example: Creating a REST API Downloader<a class="headerlink" href="#example-creating-a-rest-api-downloader" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">empml.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataDownloader</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">PostgresDownloader</span><span class="p">(</span><span class="n">DataDownloader</span><span class="p">):</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">RestAPIDownloader</span><span class="p">(</span><span class="n">DataDownloader</span><span class="p">):</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="sd">    Custom downloader for PostgreSQL databases.</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="sd">    Custom downloader that fetches data from a REST API endpoint.</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection_uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">connection_uri</span> <span class="o">=</span> <span class="n">connection_uri</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">query</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">LazyFrame</span><span class="p">:</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="sd">        Reads data from PostgreSQL and returns a Polars LazyFrame.</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="sd">        Fetches JSON data from a REST API and returns a Polars LazyFrame.</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        <span class="k">return</span> <span class="n">pl</span><span class="o">.</span><span class="n">read_database_uri</span><span class="p">(</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>            <span class="n">query</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            <span class="n">uri</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">connection_uri</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="p">)</span><span class="o">.</span><span class="n">lazy</span><span class="p">()</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>        <span class="k">return</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">lazy</span><span class="p">()</span>
 </span></code></pre></div>
 <h3 id="transformers">Transformers<a class="headerlink" href="#transformers" title="Permanent link">&para;</a></h3>
 <p>To add new data transformation logic (e.g., <strong>Clustering</strong>, dimensionality reduction, or custom feature engineering), you should extend the <code>BaseTransformer</code> class.</p>
