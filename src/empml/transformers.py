@@ -17,10 +17,10 @@ import polars as pl
 # internal imports
 from empml.base import BaseTransformer
 
-# streaming engine as the default for .collect()
-# Streaming joins may reorder rows, so every join below sets maintain_order="left":
-# predictions are matched back to the untransformed rows by position.
-pl.Config.set_engine_affinity(engine="streaming")
+# The package enables Polars' streaming engine (see empml/__init__.py), and
+# streaming joins may reorder rows. Every join below therefore sets
+# maintain_order="left": predictions are matched back to the untransformed
+# rows by position.
 
 # ------------------------------------------------------------------------------------------
 # Identity
@@ -44,103 +44,62 @@ class Identity(BaseTransformer):
 # ------------------------------------------------------------------------------------------
 
 
-class AvgFeatures(BaseTransformer):
+class _RowWiseFeature(BaseTransformer):
+    """
+    Combine several features row-wise into a new column.
+
+    Args:
+        features: Columns to combine
+        new_feature: Name of output column
+    """
+
+    def __init__(self, features: list[str], new_feature: str):
+        self.features = features
+        self.new_feature = new_feature
+
+    def _combine(self, features: list[str]) -> pl.Expr:
+        raise NotImplementedError
+
+    def fit(self, X: pl.LazyFrame):
+        return self
+
+    def transform(self, X: pl.LazyFrame):
+        return X.with_columns(self._combine(self.features).alias(self.new_feature))
+
+
+class AvgFeatures(_RowWiseFeature):
     """Compute mean across multiple features row-wise."""
 
-    def __init__(self, features: list[str], new_feature: str):
-        """
-        Args:
-            features: Columns to average
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        return X.with_columns(pl.mean_horizontal(self.features).alias(self.new_feature))
+    def _combine(self, features: list[str]) -> pl.Expr:
+        return pl.mean_horizontal(features)
 
 
-class MaxFeatures(BaseTransformer):
+class MaxFeatures(_RowWiseFeature):
     """Compute max across multiple features row-wise."""
 
-    def __init__(self, features: list[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute max over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        return X.with_columns(pl.max_horizontal(self.features).alias(self.new_feature))
+    def _combine(self, features: list[str]) -> pl.Expr:
+        return pl.max_horizontal(features)
 
 
-class MinFeatures(BaseTransformer):
+class MinFeatures(_RowWiseFeature):
     """Compute min across multiple features row-wise."""
 
-    def __init__(self, features: list[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute min over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        return X.with_columns(pl.min_horizontal(self.features).alias(self.new_feature))
+    def _combine(self, features: list[str]) -> pl.Expr:
+        return pl.min_horizontal(features)
 
 
-class StdFeatures(BaseTransformer):
+class StdFeatures(_RowWiseFeature):
     """Compute standard deviation across multiple features row-wise."""
 
-    def __init__(self, features: list[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute std over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        return X.with_columns(
-            pl.concat_list(self.features).list.std().alias(self.new_feature)
-        )
+    def _combine(self, features: list[str]) -> pl.Expr:
+        return pl.concat_list(features).list.std()
 
 
-class MedianFeatures(BaseTransformer):
+class MedianFeatures(_RowWiseFeature):
     """Compute median across multiple features row-wise."""
 
-    def __init__(self, features: list[str], new_feature: str):
-        """
-        Args:
-            features: Columns to compute median over
-            new_feature: Name of output column
-        """
-        self.features = features
-        self.new_feature = new_feature
-
-    def fit(self, X: pl.LazyFrame):
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        return X.with_columns(
-            pl.concat_list(self.features).list.median().alias(self.new_feature)
-        )
+    def _combine(self, features: list[str]) -> pl.Expr:
+        return pl.concat_list(features).list.median()
 
 
 class ModuleFeatures(BaseTransformer):
@@ -197,67 +156,72 @@ class InteractionFeatures(BaseTransformer):
 
 
 # -------------------- TARGET ENCODING -------------------------------- #
-class MeanTargetEncoder(BaseTransformer):
-    """Encode categorical features with mean of target variable."""
+class _TargetEncoder(BaseTransformer):
+    """
+    Encode categorical features with a per-category aggregate of a target column.
+
+    Subclasses choose the aggregate. Unseen categories get the aggregate over
+    all rows, or 0.0 when that is null.
+    """
+
+    _default_prefix: str
 
     def __init__(
         self,
         features: list[str],
         encoder_col: str,
-        prefix: str = "mean_",
+        prefix: str,
         suffix: str = "_encoded",
         replace_original: bool = False,
     ):
-        """
-        Args:
-            features: Categorical columns to encode
-            encoder_col: Target column to aggregate
-            prefix: Prefix for encoded column names (default: 'mean_')
-            suffix: Suffix for encoded column names (default: '_encoded')
-            replace_original: If True, drop original columns and use their names
-                            for encoded columns, ignoring prefix/suffix (default: False)
-        """
         self.features = features
         self.encoder_col = encoder_col
         self.prefix = prefix
         self.suffix = suffix
         self.replace_original = replace_original
 
+        # stacklevel=3 attributes the warnings to the code that built the encoder.
         # Handle empty prefix and suffix configurations
         if not self.replace_original and self.prefix == "" and self.suffix == "":
             warnings.warn(
                 "prefix='' and suffix='' with replace_original=False would create duplicate "
                 "column names. Setting replace_original=True automatically.",
                 UserWarning,
+                stacklevel=3,
             )
             self.replace_original = True
 
         if self.replace_original and self.prefix == "" and self.suffix == "":
             warnings.warn(
                 "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='mean_' and suffix='_encoded' for internal processing.",
+                f"Setting prefix='{self._default_prefix}' and suffix='_encoded' for internal processing.",
                 UserWarning,
+                stacklevel=3,
             )
-            self.prefix = "mean_"
+            self.prefix = self._default_prefix
             self.suffix = "_encoded"
 
         # Warn if prefix/suffix are set but will be ignored
         if self.replace_original and (
-            self.prefix != "mean_" or self.suffix != "_encoded"
+            self.prefix != self._default_prefix or self.suffix != "_encoded"
         ):
             warnings.warn(
                 "replace_original=True: prefix and suffix arguments are ignored. "
                 "Encoded columns will use original column names.",
                 UserWarning,
+                stacklevel=3,
             )
 
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        raise NotImplementedError
+
     def fit(self, X: pl.LazyFrame):
-        """Compute mean target value per category and materialize mapping."""
+        """Compute the target aggregate per category and materialize mapping."""
         self.target_encoder_dict: dict[str, pl.DataFrame] = {}
 
-        # Calculate global mean for null-safety against unseen categories
+        # Global aggregate for null-safety against unseen categories
         self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).mean()).collect().item()
+            X.select(self._aggregate(pl.col(self.encoder_col))).collect().item()
         )
         if self.global_encoded_val is None:
             self.global_encoded_val = 0.0  # Default if everything is null
@@ -269,7 +233,7 @@ class MeanTargetEncoder(BaseTransformer):
             # Materialize lookup table to avoid plan explosion during transform
             self.target_encoder_dict[f] = (
                 X.group_by(f)
-                .agg(pl.col(self.encoder_col).mean().alias(temp_col_name))
+                .agg(self._aggregate(pl.col(self.encoder_col)).alias(temp_col_name))
                 .collect()
             )
 
@@ -288,13 +252,12 @@ class MeanTargetEncoder(BaseTransformer):
                 nulls_equal=True,
                 maintain_order="left",
             )
-            # Fill unseen categories with global mean
+            # Fill unseen categories with the global aggregate
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         # If replacing originals, drop them and rename encoded columns
         if self.replace_original:
             X = X.drop(self.features)
-            # Rename encoded columns to original names
             rename_mapping = {
                 f"{self.prefix}{f}{self.suffix}": f for f in self.features
             }
@@ -303,8 +266,38 @@ class MeanTargetEncoder(BaseTransformer):
         return X
 
 
-class StdTargetEncoder(BaseTransformer):
+class MeanTargetEncoder(_TargetEncoder):
+    """Encode categorical features with mean of target variable."""
+
+    _default_prefix = "mean_"
+
+    def __init__(
+        self,
+        features: list[str],
+        encoder_col: str,
+        prefix: str = "mean_",
+        suffix: str = "_encoded",
+        replace_original: bool = False,
+    ):
+        """
+        Args:
+            features: Categorical columns to encode
+            encoder_col: Target column to aggregate
+            prefix: Prefix for encoded column names (default: 'mean_')
+            suffix: Suffix for encoded column names (default: '_encoded')
+            replace_original: If True, drop original columns and use their names
+                            for encoded columns, ignoring prefix/suffix (default: False)
+        """
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
+
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.mean()
+
+
+class StdTargetEncoder(_TargetEncoder):
     """Encode categorical features with std of target variable."""
+
+    _default_prefix = "std_"
 
     def __init__(
         self,
@@ -323,89 +316,16 @@ class StdTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        # Handle empty prefix and suffix configurations
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='std_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "std_"
-            self.suffix = "_encoded"
-
-        # Warn if prefix/suffix are set but will be ignored
-        if self.replace_original and (
-            self.prefix != "std_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute std of target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        # Calculate global std for null-safety against unseen categories
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).std()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).std().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.std()
 
 
-class MaxTargetEncoder(BaseTransformer):
+class MaxTargetEncoder(_TargetEncoder):
     """Encode categorical features with max of target variable."""
+
+    _default_prefix = "max_"
 
     def __init__(
         self,
@@ -424,86 +344,16 @@ class MaxTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='max_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "max_"
-            self.suffix = "_encoded"
-
-        if self.replace_original and (
-            self.prefix != "max_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute max target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).max()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).max().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.max()
 
 
-class MinTargetEncoder(BaseTransformer):
+class MinTargetEncoder(_TargetEncoder):
     """Encode categorical features with min of target variable."""
+
+    _default_prefix = "min_"
 
     def __init__(
         self,
@@ -522,86 +372,16 @@ class MinTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='min_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "min_"
-            self.suffix = "_encoded"
-
-        if self.replace_original and (
-            self.prefix != "min_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute min target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).min()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).min().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.min()
 
 
-class MedianTargetEncoder(BaseTransformer):
+class MedianTargetEncoder(_TargetEncoder):
     """Encode categorical features with median of target variable."""
+
+    _default_prefix = "median_"
 
     def __init__(
         self,
@@ -620,86 +400,16 @@ class MedianTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='median_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "median_"
-            self.suffix = "_encoded"
-
-        if self.replace_original and (
-            self.prefix != "median_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute median target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).median()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).median().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.median()
 
 
-class KurtTargetEncoder(BaseTransformer):
+class KurtTargetEncoder(_TargetEncoder):
     """Encode categorical features with kurtosis of target variable."""
+
+    _default_prefix = "kurt_"
 
     def __init__(
         self,
@@ -718,87 +428,16 @@ class KurtTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='kurt_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "kurt_"
-            self.suffix = "_encoded"
-
-        if self.replace_original and (
-            self.prefix != "kurt_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute kurtosis of target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).kurtosis()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).kurtosis().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.kurtosis()
 
 
-class SkewTargetEncoder(BaseTransformer):
+class SkewTargetEncoder(_TargetEncoder):
     """Encode categorical features with skewness of target variable."""
+
+    _default_prefix = "skew_"
 
     def __init__(
         self,
@@ -817,82 +456,10 @@ class SkewTargetEncoder(BaseTransformer):
             replace_original: If True, drop original columns and use their names
                             for encoded columns, ignoring prefix/suffix (default: False)
         """
-        self.features = features
-        self.encoder_col = encoder_col
-        self.prefix = prefix
-        self.suffix = suffix
-        self.replace_original = replace_original
+        super().__init__(features, encoder_col, prefix, suffix, replace_original)
 
-        if not self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "prefix='' and suffix='' with replace_original=False would create duplicate "
-                "column names. Setting replace_original=True automatically.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.replace_original = True
-
-        if self.replace_original and self.prefix == "" and self.suffix == "":
-            warnings.warn(
-                "replace_original=True with prefix='' and suffix='' would cause errors. "
-                "Setting prefix='skew_' and suffix='_encoded' for internal processing.",
-                UserWarning,
-                stacklevel=2,
-            )
-            self.prefix = "skew_"
-            self.suffix = "_encoded"
-
-        if self.replace_original and (
-            self.prefix != "skew_" or self.suffix != "_encoded"
-        ):
-            warnings.warn(
-                "replace_original=True: prefix and suffix arguments are ignored. "
-                "Encoded columns will use original column names.",
-                UserWarning,
-                stacklevel=2,
-            )
-
-    def fit(self, X: pl.LazyFrame):
-        """Compute skewness of target value per category and materialize mapping."""
-        self.target_encoder_dict: dict[str, pl.DataFrame] = {}
-
-        self.global_encoded_val = (
-            X.select(pl.col(self.encoder_col).skew()).collect().item()
-        )
-        if self.global_encoded_val is None:
-            self.global_encoded_val = 0.0
-
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            self.target_encoder_dict[f] = (
-                X.group_by(f)
-                .agg(pl.col(self.encoder_col).skew().alias(temp_col_name))
-                .collect()
-            )
-
-        return self
-
-    def transform(self, X: pl.LazyFrame):
-        """Join encoded values to input data and fill nulls."""
-        for f in self.features:
-            temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(
-                self.target_encoder_dict[f].lazy(),
-                how="left",
-                on=f,
-                nulls_equal=True,
-                maintain_order="left",
-            )
-            X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
-
-        if self.replace_original:
-            X = X.drop(self.features)
-            rename_mapping = {
-                f"{self.prefix}{f}{self.suffix}": f for f in self.features
-            }
-            X = X.rename(rename_mapping)
-
-        return X
+    def _aggregate(self, column: pl.Expr) -> pl.Expr:
+        return column.skew()
 
 
 # -------------------- ORDINAL ENCODING -------------------------------- #

@@ -9,15 +9,17 @@ from contextlib import contextmanager
 from functools import wraps
 from typing import Any
 
-import polars as pl
-
-# streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine="streaming")
-
 # --- Logging Setup ---
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+# ANSI escape codes for colored terminal output
+RED = "\033[31m"
+GREEN = "\033[32m"
+BLUE = "\033[34m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
 
 # ------------------------------------------------------------------------------------------
 # DECORATORS

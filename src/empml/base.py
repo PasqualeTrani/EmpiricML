@@ -11,9 +11,6 @@ import numpy as np
 # wranglers
 import polars as pl
 
-# streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine="streaming")
-
 # ------------------------------------------------------------------------------------------
 # Data Downloader
 # ------------------------------------------------------------------------------------------

@@ -150,3 +150,27 @@ ruff check src tests
 ```
 
 The test suite leaves the repository clean. Each test runs in its own pytest temporary directory, so `Lab` artifact folders never appear in the project. The pytest, coverage, ruff, and mypy caches are all written to the git-ignored `.cache/` folder.
+
+The Lab tests in `tests/test_lab_characterization.py` compare observable results with golden snapshots in `tests/fixtures/`. If you change Lab behavior on purpose, regenerate them with `EMPML_UPDATE_GOLDEN=1 pytest tests/test_lab_characterization.py` and review the fixture diff. `tests/fixtures/legacy_lab_checkpoint.pkl` is never regenerated, because it proves that checkpoints saved by older releases still load.
+
+---
+
+## 4. Code Layout
+
+`Lab` is a thin coordinator. Each responsibility lives in its own module:
+
+| Module | Responsibility |
+| :--- | :--- |
+| `empml.lab` | `Lab`, `ComparisonCriteria`, `restore_check_point`: the experiment workflow |
+| `empml.pipeline` | `Pipeline` and fold-by-fold evaluation with early stopping |
+| `empml.results` | Results table schemas and row formatting; `MetricColumns` names per-metric columns |
+| `empml.comparison` | Experiment comparison statistics, the improvement rule, permutation p-values, and printed reports |
+| `empml.hpo` | Hyperparameter search space, HPO pipelines, and best-result selection |
+| `empml.baselines` | The baseline model catalog used by `run_base_experiments` |
+| `empml.feature_selection` | Permutation feature importance |
+| `empml.artifacts` | Where a Lab stores pipelines, predictions, and checkpoints on disk |
+| `empml.lab_utils` | Row-ID and prediction-storage helpers, plus compatibility aliases |
+
+Single-metric and multi-metric Labs share one code path. A single metric behaves as a list of one metric whose columns keep their unsuffixed names (`cv_mean_score` instead of `cv_mean_score_1`).
+
+`Lab` instances are pickled into checkpoints, and transformers are pickled inside pipelines. Keep their instance attribute names stable, and derive helpers from existing attributes instead of storing new ones.

@@ -9,9 +9,6 @@ from empml.base import DataDownloader  # base class
 # internal imports
 from empml.utils import log_execution_time
 
-# streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine="streaming")
-
 # ------------------------------------------------------------------------------------------
 # Implementations of the DataDownloader base class
 # ------------------------------------------------------------------------------------------
@@ -57,7 +54,29 @@ class ExcelDownloader(DataDownloader):
 # ------------------------------------------------------------------------------------------
 
 
-class SQLDownloader(DataDownloader):
+class _ConnectorXDownloader(DataDownloader):
+    """Read ``query`` through connectorx from ``connection_uri``, set by subclasses."""
+
+    query: str
+    connection_uri: str
+
+    @log_execution_time
+    def get_data(self) -> pl.LazyFrame:
+        return pl.read_database_uri(self.query, self.connection_uri).lazy()
+
+
+def _server_uri(
+    scheme: str, user: str, password: str, host: str, port: int, database: str
+) -> str:
+    """Connection URI with percent-encoded credentials and database name."""
+    return (
+        f"{scheme}://{quote_plus(user)}:"
+        f"{quote_plus(password)}@{host}:{port}"
+        f"/{quote(database, safe='')}"
+    )
+
+
+class SQLDownloader(_ConnectorXDownloader):
     """Class for reading data from any SQL database via connection URI.
 
     Uses connectorx under the hood (pip install connectorx).
@@ -73,12 +92,8 @@ class SQLDownloader(DataDownloader):
         self.query = query
         self.connection_uri = connection_uri
 
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
-
-class PostgreSQLDownloader(DataDownloader):
+class PostgreSQLDownloader(_ConnectorXDownloader):
     """Class for reading data from PostgreSQL
     and returns a Polars LazyFrame.
 
@@ -95,18 +110,12 @@ class PostgreSQLDownloader(DataDownloader):
         port: int = 5432,
     ):
         self.query = query
-        self.connection_uri = (
-            f"postgresql://{quote_plus(user)}:"
-            f"{quote_plus(password)}@{host}:{port}"
-            f"/{quote(database, safe='')}"
+        self.connection_uri = _server_uri(
+            "postgresql", user, password, host, port, database
         )
 
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
-
-class MySQLDownloader(DataDownloader):
+class MySQLDownloader(_ConnectorXDownloader):
     """Class for reading data from MySQL
     and returns a Polars LazyFrame.
 
@@ -123,18 +132,10 @@ class MySQLDownloader(DataDownloader):
         port: int = 3306,
     ):
         self.query = query
-        self.connection_uri = (
-            f"mysql://{quote_plus(user)}:"
-            f"{quote_plus(password)}@{host}:{port}"
-            f"/{quote(database, safe='')}"
-        )
-
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
+        self.connection_uri = _server_uri("mysql", user, password, host, port, database)
 
 
-class MSSQLDownloader(DataDownloader):
+class MSSQLDownloader(_ConnectorXDownloader):
     """Class for reading data from Microsoft SQL Server
     and returns a Polars LazyFrame.
 
@@ -153,18 +154,10 @@ class MSSQLDownloader(DataDownloader):
         port: int = 1433,
     ):
         self.query = query
-        self.connection_uri = (
-            f"mssql://{quote_plus(user)}:"
-            f"{quote_plus(password)}@{host}:{port}"
-            f"/{quote(database, safe='')}"
-        )
-
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
+        self.connection_uri = _server_uri("mssql", user, password, host, port, database)
 
 
-class SQLiteDownloader(DataDownloader):
+class SQLiteDownloader(_ConnectorXDownloader):
     """Class for reading data from a SQLite database
     and returns a Polars LazyFrame.
 
@@ -175,12 +168,8 @@ class SQLiteDownloader(DataDownloader):
         self.query = query
         self.connection_uri = f"sqlite://{quote(path, safe='/:')}"
 
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
-
-class OracleDownloader(DataDownloader):
+class OracleDownloader(_ConnectorXDownloader):
     """Class for reading data from Oracle Database
     and returns a Polars LazyFrame.
 
@@ -197,15 +186,9 @@ class OracleDownloader(DataDownloader):
         port: int = 1521,
     ):
         self.query = query
-        self.connection_uri = (
-            f"oracle://{quote_plus(user)}:"
-            f"{quote_plus(password)}@{host}:{port}"
-            f"/{quote(database, safe='')}"
+        self.connection_uri = _server_uri(
+            "oracle", user, password, host, port, database
         )
-
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 # ------------------------------------------------------------------------------------------
@@ -213,7 +196,7 @@ class OracleDownloader(DataDownloader):
 # ------------------------------------------------------------------------------------------
 
 
-class RedshiftDownloader(DataDownloader):
+class RedshiftDownloader(_ConnectorXDownloader):
     """Class for reading data from Amazon Redshift
     and returns a Polars LazyFrame.
 
@@ -230,15 +213,9 @@ class RedshiftDownloader(DataDownloader):
         port: int = 5439,
     ):
         self.query = query
-        self.connection_uri = (
-            f"redshift://{quote_plus(user)}:"
-            f"{quote_plus(password)}@{host}:{port}"
-            f"/{quote(database, safe='')}"
+        self.connection_uri = _server_uri(
+            "redshift", user, password, host, port, database
         )
-
-    @log_execution_time
-    def get_data(self) -> pl.LazyFrame:
-        return pl.read_database_uri(self.query, self.connection_uri).lazy()
 
 
 class BigQueryDownloader(DataDownloader):

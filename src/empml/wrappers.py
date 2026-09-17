@@ -5,9 +5,6 @@ import polars as pl
 
 from empml.base import BaseEstimator, SKlearnEstimator
 
-# streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine="streaming")
-
 
 def _check_torch_available():
     """Check if torch is available and raise informative error if not."""
