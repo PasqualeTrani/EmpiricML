@@ -403,7 +403,17 @@ class Lab:
     @log_execution_time
     def _save_predictions(self, eval: pl.DataFrame):
         """Save predictions as compressed parquet."""
-        preds = prepare_predictions_for_save(eval)
+        validation_keys = []
+        for fold_number, fold_indexes in enumerate(self.cv_indexes, 1):
+            valid_idx = fold_indexes[1]
+            keys = (
+                self.train.filter(pl.col(self.row_id).is_in(valid_idx))
+                .select(self.row_id)
+                .collect()
+                .with_columns(pl.lit(fold_number).alias("fold_number"))
+            )
+            validation_keys.append(keys)
+        preds = prepare_predictions_for_save(eval, validation_keys, self.row_id)
         preds.write_parquet(
             f"./{self.name}/predictions/predictions_{self.next_experiment_id}.parquet",
             compression="zstd",
@@ -443,8 +453,9 @@ class Lab:
     ):
         """Single-metric best experiment update."""
         comparison = compare_results_stats(results_a, results_b, minimize=self.minimize)
+        mean_performance = comparison["mean_cv_performance"]
         if self.eval_has_pct:
-            c1 = comparison["mean_cv_performance"] > (self.pct_threshold)
+            c1 = mean_performance is not None and mean_performance > self.pct_threshold
             c2 = comparison["n_folds_lower_performance"] <= (self.n_folds_threshold)
             if c1 and c2:
                 self.best_experiment = idx_b
@@ -453,7 +464,7 @@ class Lab:
                 experiment_ids=experiment_ids,
                 n_iters=self.n_iters,
             )
-            c1 = comparison["mean_cv_performance"] > 0
+            c1 = mean_performance is not None and mean_performance > 0
             c2 = comparison["n_folds_lower_performance"] <= (self.n_folds_threshold)
             c3 = pvalue < self.alpha
             if c1 and c2 and c3:
@@ -476,7 +487,8 @@ class Lab:
         )
         if self.eval_has_pct:
             all_pass = all(
-                c["mean_cv_performance"] > self.pct_threshold
+                c["mean_cv_performance"] is not None
+                and c["mean_cv_performance"] > self.pct_threshold
                 and c["n_folds_lower_performance"] <= self.n_folds_threshold
                 for c in comparisons
             )
@@ -488,7 +500,8 @@ class Lab:
                 n_iters=self.n_iters,
             )
             all_pass = all(
-                c["mean_cv_performance"] > 0
+                c["mean_cv_performance"] is not None
+                and c["mean_cv_performance"] > 0
                 and c["n_folds_lower_performance"] <= self.n_folds_threshold
                 and pv < self.alpha
                 for c, pv in zip(comparisons, pvalues, strict=False)
@@ -904,15 +917,17 @@ class Lab:
 
         Returns LazyFrame with row_id, fold, target, and predictions from each experiment.
         """
-        # Create base frame with fold assignments
-        base_preds = pl.concat(
-            [
-                pl.LazyFrame(self.cv_indexes[j][1], schema=[self.row_id]).with_columns(
-                    pl.lit(j + 1).alias("fold_number")
-                )
-                for j in range(len(self.cv_indexes))
-            ],
-            how="vertical_relaxed",
+        # Filtering preserves the source order used when each prediction was made.
+        validation_keys = []
+        for fold_number, fold_indexes in enumerate(self.cv_indexes, 1):
+            valid_idx = fold_indexes[1]
+            validation_keys.append(
+                self.train.filter(pl.col(self.row_id).is_in(valid_idx))
+                .select(self.row_id)
+                .with_columns(pl.lit(fold_number).alias("fold_number"))
+            )
+        base_preds = pl.concat(validation_keys, how="vertical_relaxed").with_row_index(
+            "_prediction_order"
         )
 
         base_preds = base_preds.join(
@@ -921,13 +936,25 @@ class Lab:
             on=self.row_id,
         )
 
-        # Add predictions from each experiment
-        preds = base_preds.with_columns(
-            retrieve_predictions_from_path(lab_name=self.name, experiment_id=idx)
-            for idx in experiment_ids
-        )
+        preds = base_preds
+        for idx in experiment_ids:
+            stored = retrieve_predictions_from_path(
+                lab_name=self.name, experiment_id=idx
+            )
+            prediction_col = f"preds_{idx}"
+            if {self.row_id, "fold_number"}.issubset(stored.columns):
+                preds = preds.join(
+                    stored.lazy(),
+                    how="left",
+                    on=[self.row_id, "fold_number"],
+                )
+            else:
+                legacy = stored.with_row_index("_prediction_order").lazy()
+                preds = preds.join(legacy, how="left", on="_prediction_order")
+            if prediction_col not in preds.collect_schema().names():
+                preds = preds.with_columns(pl.lit(None).alias(prediction_col))
 
-        return preds
+        return preds.drop("_prediction_order")
 
     def compute_pvalue(
         self,

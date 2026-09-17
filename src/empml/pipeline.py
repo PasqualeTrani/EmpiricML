@@ -285,12 +285,12 @@ class Pipeline:
 # ------------------------------------------------------------------------------------------
 
 
-def relative_performance(minimize: bool, x1: float, x2: float) -> float:
+def relative_performance(minimize: bool, x1: float, x2: float) -> float | None:
     """
     Compute the relative performance of a pipeline with score x2 with respect to another of score x1 (reference).
     The same function can be used to compute overfitting.
     """
-    if not x2:
+    if x1 is None or x2 is None or x1 == 0:
         return None
 
     if minimize:
@@ -366,7 +366,7 @@ def eval_pipeline_single_fold(
 def eval_pipeline_cv(
     pipeline: Pipeline,
     lz: pl.LazyFrame,
-    cv_indexes: list[tuple[np.array]],
+    cv_indexes: list[tuple[np.ndarray, np.ndarray]],
     row_id: str,
     metric: Metric,
     target: str,
@@ -490,9 +490,9 @@ def compare_results_stats(
 
     return {
         # cv aggregate stats - float/int values
-        "mean_cv_performance": mean_cv_performance,
-        "mean_cv_performance_overfitting": mean_cv_performance_overfitting,
-        "std_cv_performance": std_cv_performance,
+        "mean_cv_performance": mean_cv_performance,  # type: ignore[dict-item]
+        "mean_cv_performance_overfitting": mean_cv_performance_overfitting,  # type: ignore[dict-item]
+        "std_cv_performance": std_cv_performance,  # type: ignore[dict-item]
         "n_folds_better_performance": n_folds_better_performance,
         "n_folds_lower_performance": n_folds_lower_performance,
         "n_folds": n_folds,
@@ -566,7 +566,9 @@ def eval_pipeline_single_fold_multi(
         result[f"validation_score_{i}"] = score
         result[f"train_score_{i}"] = t_score
         if eval_overfitting:
-            result[f"overfitting_{i}"] = relative_performance(mini, score, t_score)
+            result[f"overfitting_{i}"] = relative_performance(  # type: ignore[assignment]
+                mini, score, t_score
+            )
         else:
             result[f"overfitting_{i}"] = np.nan
 

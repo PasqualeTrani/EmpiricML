@@ -34,7 +34,9 @@ class DataDownloader(ABC):
 
 class CVGenerator(ABC):
     @abstractmethod
-    def split(self, lf: pl.LazyFrame, row_id: str) -> list[tuple[np.array]]:
+    def split(
+        self, lf: pl.LazyFrame, row_id: str
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
         """Generate a list of tuple with two elements: the first one is an array containing the row indexes for the train dataset, while the second contains the row indexes for the validation dataset"""
         pass
 

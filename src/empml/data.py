@@ -1,5 +1,5 @@
 # standard import libraries
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 # wranglers
 import polars as pl
@@ -98,7 +98,7 @@ class PostgreSQLDownloader(DataDownloader):
         self.connection_uri = (
             f"postgresql://{quote_plus(user)}:"
             f"{quote_plus(password)}@{host}:{port}"
-            f"/{database}"
+            f"/{quote(database, safe='')}"
         )
 
     @log_execution_time
@@ -126,7 +126,7 @@ class MySQLDownloader(DataDownloader):
         self.connection_uri = (
             f"mysql://{quote_plus(user)}:"
             f"{quote_plus(password)}@{host}:{port}"
-            f"/{database}"
+            f"/{quote(database, safe='')}"
         )
 
     @log_execution_time
@@ -156,7 +156,7 @@ class MSSQLDownloader(DataDownloader):
         self.connection_uri = (
             f"mssql://{quote_plus(user)}:"
             f"{quote_plus(password)}@{host}:{port}"
-            f"/{database}"
+            f"/{quote(database, safe='')}"
         )
 
     @log_execution_time
@@ -173,7 +173,7 @@ class SQLiteDownloader(DataDownloader):
 
     def __init__(self, query: str, path: str):
         self.query = query
-        self.connection_uri = f"sqlite://{path}"
+        self.connection_uri = f"sqlite://{quote(path, safe='/:')}"
 
     @log_execution_time
     def get_data(self) -> pl.LazyFrame:
@@ -200,7 +200,7 @@ class OracleDownloader(DataDownloader):
         self.connection_uri = (
             f"oracle://{quote_plus(user)}:"
             f"{quote_plus(password)}@{host}:{port}"
-            f"/{database}"
+            f"/{quote(database, safe='')}"
         )
 
     @log_execution_time
@@ -233,7 +233,7 @@ class RedshiftDownloader(DataDownloader):
         self.connection_uri = (
             f"redshift://{quote_plus(user)}:"
             f"{quote_plus(password)}@{host}:{port}"
-            f"/{database}"
+            f"/{quote(database, safe='')}"
         )
 
     @log_execution_time

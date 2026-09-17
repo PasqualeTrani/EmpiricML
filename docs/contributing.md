@@ -135,3 +135,18 @@ class MyTransformer(BaseTransformer):
 By following these patterns, you can integrate virtually any custom logic into the EmpiricML pipeline.
 
 **If you create a custom transformer or a custom downloader not included in the framework, please consider submitting a pull request to add it. Thank you!**
+
+---
+
+## 3. Running Tests
+
+Install the development dependencies and run the checks from the repository root:
+
+```bash
+pip install -e ".[dev]"
+pytest --cov=empml --cov-report=term-missing
+ruff format --check src tests
+ruff check src tests
+```
+
+The test suite leaves the repository clean. Each test runs in its own pytest temporary directory, so `Lab` artifact folders never appear in the project. The pytest, coverage, ruff, and mypy caches are all written to the git-ignored `.cache/` folder.

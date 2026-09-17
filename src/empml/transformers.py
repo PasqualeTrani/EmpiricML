@@ -18,6 +18,8 @@ import polars as pl
 from empml.base import BaseTransformer
 
 # streaming engine as the default for .collect()
+# Streaming joins may reorder rows, so every join below sets maintain_order="left":
+# predictions are matched back to the untransformed rows by position.
 pl.Config.set_engine_affinity(engine="streaming")
 
 # ------------------------------------------------------------------------------------------
@@ -279,7 +281,13 @@ class MeanTargetEncoder(BaseTransformer):
         # Join all encoded columns
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             # Fill unseen categories with global mean
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
@@ -377,7 +385,13 @@ class StdTargetEncoder(BaseTransformer):
         """Join encoded values to input data and fill nulls."""
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -469,7 +483,13 @@ class MaxTargetEncoder(BaseTransformer):
         """Join encoded values to input data and fill nulls."""
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -561,7 +581,13 @@ class MinTargetEncoder(BaseTransformer):
         """Join encoded values to input data and fill nulls."""
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -653,7 +679,13 @@ class MedianTargetEncoder(BaseTransformer):
         """Join encoded values to input data and fill nulls."""
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -746,7 +778,13 @@ class KurtTargetEncoder(BaseTransformer):
 
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -838,7 +876,13 @@ class SkewTargetEncoder(BaseTransformer):
         """Join encoded values to input data and fill nulls."""
         for f in self.features:
             temp_col_name = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self.target_encoder_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.target_encoder_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col_name).fill_null(self.global_encoded_val))
 
         if self.replace_original:
@@ -928,7 +972,12 @@ class OrdinalEncoder(BaseTransformer):
         for f in self.features:
             temp_col_name = f"{f}{self.suffix}"
             # Join encoding dictionary
-            X = X.join(self.encoding_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self.encoding_dict[f].lazy(),
+                how="left",
+                on=f,
+                maintain_order="left",
+            )
 
             # Handle nulls and unknown categories
             X = X.with_columns(
@@ -1086,7 +1135,13 @@ class FrequencyEncoder(BaseTransformer):
         """Join frequency values and fill unseen categories with 0."""
         for f in self.features:
             temp_col = f"{self.prefix}{f}{self.suffix}"
-            X = X.join(self._freq_dict[f].lazy(), how="left", on=f)
+            X = X.join(
+                self._freq_dict[f].lazy(),
+                how="left",
+                on=f,
+                nulls_equal=True,
+                maintain_order="left",
+            )
             X = X.with_columns(pl.col(temp_col).fill_null(0.0 if self.normalize else 0))
 
         if self.replace_original:
@@ -1136,7 +1191,12 @@ class StandardScaler(BaseTransformer):
 
             # Handle null or zero std to avoid division by zero/inf
             if std_val is None or std_val == 0:
-                X = X.with_columns(pl.lit(0.0).alias(f"{f}{self.suffix}"))
+                X = X.with_columns(
+                    pl.when(pl.col(f).is_null())
+                    .then(None)
+                    .otherwise(0.0)
+                    .alias(f"{f}{self.suffix}")
+                )
             else:
                 X = X.with_columns(
                     ((pl.col(f) - mean_val) / std_val).alias(f"{f}{self.suffix}")
@@ -1176,9 +1236,18 @@ class MinMaxScaler(BaseTransformer):
             max_val = self.stats[f"{f}_max"].item()
 
             # Prevent division by zero if all values are identical
-            denominator = max_val - min_val
-            if denominator == 0:
-                X = X.with_columns(pl.lit(0.0).alias(f"{f}{self.suffix}"))
+            denominator = (
+                max_val - min_val
+                if min_val is not None and max_val is not None
+                else None
+            )
+            if denominator is None or denominator == 0:
+                X = X.with_columns(
+                    pl.when(pl.col(f).is_null())
+                    .then(None)
+                    .otherwise(0.0)
+                    .alias(f"{f}{self.suffix}")
+                )
             else:
                 X = X.with_columns(
                     ((pl.col(f) - min_val) / denominator).alias(f"{f}{self.suffix}")
@@ -1215,10 +1284,19 @@ class RobustScaler(BaseTransformer):
             median_val = self.stats[f"{f}_median"].item()
             q25_val = self.stats[f"{f}_q25"].item()
             q75_val = self.stats[f"{f}_q75"].item()
-            iqr = q75_val - q25_val
+            iqr = (
+                q75_val - q25_val
+                if q25_val is not None and q75_val is not None
+                else None
+            )
 
             if iqr is None or iqr == 0:
-                X = X.with_columns(pl.lit(0.0).alias(f"{f}{self.suffix}"))
+                X = X.with_columns(
+                    pl.when(pl.col(f).is_null())
+                    .then(None)
+                    .otherwise(0.0)
+                    .alias(f"{f}{self.suffix}")
+                )
             else:
                 X = X.with_columns(
                     ((pl.col(f) - median_val) / iqr).alias(f"{f}{self.suffix}")
@@ -1521,17 +1599,20 @@ class SimpleImputer(BaseTransformer):
 
     def fit(self, X: pl.LazyFrame):
         """Compute imputation values based on strategy and materialize results."""
-        if self.strategy == "median":
-            stats = X.select(self.features).median().collect()
-        else:
-            stats = X.select(self.features).mean().collect()
+        aggregation = "median" if self.strategy == "median" else "mean"
+        stats = X.select(
+            getattr(pl.col(col).fill_nan(None), aggregation)().alias(col)
+            for col in self.features
+        ).collect()
 
         # Store as dictionary for fast lookup in transform without nested collection
         # Handle cases where column is empty or all nulls
         self.impute_values = {}
         for col in self.features:
             val = stats[col].item()
-            self.impute_values[col] = val if val is not None else 0.0
+            self.impute_values[col] = (
+                val if val is not None and not np.isnan(val) else 0.0
+            )
 
         return self
 
@@ -1672,6 +1753,7 @@ class GenerateLags(BaseTransformer):
                 ),
                 how="left",
                 on=[self.ts_index, self.date_col],
+                maintain_order="left",
             )
 
         return X

@@ -10,7 +10,9 @@
 | `TrainTestSplit` | Single train-test split with random shuffling. |
 
 ## KFold
-Standard K-Fold cross-validation with random shuffling.
+Standard K-Fold cross-validation with random shuffling. Uneven inputs are
+distributed across folds whose sizes differ by at most one, so every row is
+used for validation exactly once.
 
 ### Methods
 
@@ -161,8 +163,8 @@ def split(self, lf: pl.LazyFrame, row_id: str) -> List[Tuple[np.ndarray, np.ndar
     
     Notes
     -----
-    - If date_col is not already datetime type, it will be automatically converted
-      from string format using polars' str.to_datetime() method.
+    - Native Polars `Date` and `Datetime` columns are accepted directly. String
+      columns are parsed with Polars; unsupported column types raise `TypeError`.
     - Date filtering uses inclusive start (>=) and exclusive end (<) boundaries.
     """
     pass
@@ -170,6 +172,9 @@ def split(self, lf: pl.LazyFrame, row_id: str) -> List[Tuple[np.ndarray, np.ndar
 
 ## TrainTestSplit
 Single train-test split with random shuffling.
+
+Datasets must contain at least two rows. Both partitions are guaranteed to be
+nonempty regardless of rounding for the selected `test_size`.
 
 ### Methods
 

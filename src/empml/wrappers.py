@@ -302,11 +302,11 @@ class TorchWrapper(BaseEstimator):
         self.module = module
         self.features = features
         self.target = target
-        self.task = task.lower()
+        self.task = task
 
         # Module parameters
-        self.input_dim = input_dim if input_dim is not None else len(features)
-        self.hidden_layers = hidden_layers if hidden_layers is not None else [64, 32]
+        self.input_dim = input_dim
+        self.hidden_layers = hidden_layers
         self.output_dim = output_dim
 
         # Skorch training parameters
@@ -318,7 +318,7 @@ class TorchWrapper(BaseEstimator):
 
         # Skorch regularization & training
         self.train_split = train_split
-        self.callbacks = callbacks if callbacks is not None else []
+        self.callbacks = callbacks
         self.warm_start = warm_start
         self.verbose = verbose
 
@@ -348,24 +348,24 @@ class TorchWrapper(BaseEstimator):
             Target array used to infer output_dim for classification
         """
         # Determine output_dim if not specified
+        task = self.task.lower()
         output_dim = self.output_dim
         if output_dim is None:
-            if self.task == "classification":
+            if task == "classification":
                 output_dim = len(np.unique(y))
             else:  # regression
                 output_dim = 1
 
         # Prepare module parameters
         module_params = {
-            "module__input_dim": self.input_dim,
-            "module__hidden_layers": self.hidden_layers,
+            "module__input_dim": (
+                self.input_dim if self.input_dim is not None else len(self.features)
+            ),
+            "module__hidden_layers": (
+                self.hidden_layers if self.hidden_layers is not None else [64, 32]
+            ),
             "module__output_dim": output_dim,
         }
-
-        # Add any module-specific kwargs
-        for key, value in self.kwargs.items():
-            if key.startswith("module__"):
-                module_params[key] = value
 
         # Common parameters for both regressor and classifier
         common_params = {
@@ -374,7 +374,7 @@ class TorchWrapper(BaseEstimator):
             "lr": self.lr,
             "batch_size": self.batch_size,
             "train_split": self.train_split,
-            "callbacks": self.callbacks,
+            "callbacks": self.callbacks if self.callbacks is not None else [],
             "warm_start": self.warm_start,
             "verbose": self.verbose,
             "device": self.device,
@@ -393,20 +393,16 @@ class TorchWrapper(BaseEstimator):
         if self.iterator_valid is not None:
             common_params["iterator_valid"] = self.iterator_valid
 
-        # Add optimizer-specific kwargs (e.g., optimizer__weight_decay)
-        for key, value in self.kwargs.items():
-            if key.startswith("optimizer__") or key.startswith("criterion__"):
-                common_params[key] = value
-
-        # Merge module and common parameters
-        all_params = {**common_params, **module_params}
+        # Forward every additional skorch parameter; explicit module__ kwargs
+        # take precedence over the architecture defaults above.
+        all_params = {**common_params, **module_params, **self.kwargs}
 
         # Create the appropriate estimator
         _check_torch_available()
         NeuralNetRegressor, NeuralNetClassifier = _check_skorch_available()
-        if self.task == "classification":
+        if task == "classification":
             self.estimator_ = NeuralNetClassifier(**all_params)
-        elif self.task == "regression":
+        elif task == "regression":
             self.estimator_ = NeuralNetRegressor(**all_params)
         else:
             raise ValueError(
@@ -435,7 +431,7 @@ class TorchWrapper(BaseEstimator):
         y = lf.select(self.target).collect().to_series().to_numpy()
 
         # Convert y to appropriate dtype
-        if self.task == "regression":
+        if self.task.lower() == "regression":
             y = y.astype("float32")
         else:  # classification
             # Keep y as integers for classification
@@ -503,7 +499,7 @@ class TorchWrapper(BaseEstimator):
         if self.estimator_ is None:
             raise RuntimeError("Model must be fitted before calling predict_proba()")
 
-        if self.task != "classification":
+        if self.task.lower() != "classification":
             raise AttributeError(
                 "predict_proba is only available for classification tasks"
             )
@@ -550,11 +546,11 @@ class TorchWrapper(BaseEstimator):
 
         Required for sklearn compatibility and hyperparameter tuning.
         """
-        # Separate regular params from kwargs
-        valid_params = set(self.get_params(deep=False).keys()) - {"kwargs"}
+        # get_params() also lists the extra skorch kwargs; exclude them here.
+        constructor_params = self.get_params(deep=False).keys() - self.kwargs.keys()
 
         for key, value in params.items():
-            if key in valid_params:
+            if key in constructor_params:
                 setattr(self, key, value)
             else:
                 self.kwargs[key] = value

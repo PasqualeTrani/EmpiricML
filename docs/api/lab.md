@@ -46,7 +46,9 @@ def __init__(
 *   `target`: Name of target column.
 *   `comparison_criteria`: Statistical criteria for experiment comparison.
 *   `minimize`: Whether to minimize metric(s) (default True). When `metric` is a list, this can be a list of bools matching the length of `metric`.
-*   `row_id`: Column name for row identifier.
+*   `row_id`: Column name for row identifier. Caller-supplied identifiers must
+    exist, be non-null/non-NaN, and be unique; otherwise initialization raises
+    `ValueError`.
 *   `test_downloader`: Optional test data source.
 *   `name`: Lab identifier (auto-generated if None).
 
@@ -139,6 +141,11 @@ Load predictions from specified experiments.
 ```python
 def retrieve_predictions(self, experiment_ids = List[int], extra_features : List[str] = []) -> pl.LazyFrame
 ```
+
+Prediction artifacts are keyed by row ID and `fold_number`, so retrieval remains
+aligned even when folds are shuffled. Rows from unevaluated folds in an
+early-stopped experiment have null predictions. Legacy one-column prediction
+artifacts remain readable using their original source-filter order.
 
 #### `compute_pvalue`
 Compute permutation test p-value(s) comparing two experiments.

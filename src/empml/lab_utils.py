@@ -30,8 +30,8 @@ RESET = "\033[0m"
 
 
 def setup_row_id_column(
-    df: pl.DataFrame, row_id: str | None = None
-) -> tuple[pl.DataFrame, str]:
+    df: pl.LazyFrame, row_id: str | None = None
+) -> tuple[pl.LazyFrame, str]:
     """
     Ensure DataFrame has a row identifier for tracking predictions across folds.
 
@@ -46,6 +46,21 @@ def setup_row_id_column(
         Tuple of (DataFrame with row ID, row ID column name)
     """
     if row_id:
+        schema = df.collect_schema()
+        if row_id not in schema.names():
+            raise ValueError(f"Row ID column {row_id!r} was not found.")
+        missing_id = pl.col(row_id).is_null()
+        if schema[row_id] in (pl.Float32, pl.Float64):
+            missing_id = missing_id | pl.col(row_id).is_nan()
+        id_stats = df.select(
+            pl.len().alias("rows"),
+            missing_id.sum().alias("nulls"),
+            pl.col(row_id).n_unique().alias("unique"),
+        ).collect()
+        if id_stats["nulls"].item() > 0:
+            raise ValueError(f"Row ID column {row_id!r} must not contain null values.")
+        if id_stats["unique"].item() != id_stats["rows"].item():
+            raise ValueError(f"Row ID column {row_id!r} must contain unique values.")
         return df, row_id
     else:
         # Create 'row_id' column with sequential indices
@@ -324,7 +339,11 @@ def format_experiment_details_multi(
     )
 
 
-def prepare_predictions_for_save(eval: pl.DataFrame) -> pl.DataFrame:
+def prepare_predictions_for_save(
+    eval: pl.DataFrame,
+    validation_keys: list[pl.DataFrame],
+    row_id: str,
+) -> pl.DataFrame:
     """
     Extract predictions from evaluation results for Lab's prediction storage.
 
@@ -333,19 +352,38 @@ def prepare_predictions_for_save(eval: pl.DataFrame) -> pl.DataFrame:
 
     Args:
         eval: DataFrame with nested predictions per fold
+        validation_keys: Row IDs and fold numbers in prediction order
+        row_id: Name of the row identifier column
 
     Returns:
-        DataFrame with predictions unnested, one row per sample
+        DataFrame keyed by row ID and fold number, one row per evaluated sample
     """
+    prediction_frames = []
+    for fold_index, predictions in enumerate(eval["preds"].to_list()):
+        if not isinstance(predictions, (list, np.ndarray)):
+            continue
+        keys = validation_keys[fold_index]
+        if keys.height != len(predictions):
+            raise ValueError(
+                f"Fold {fold_index + 1} has {keys.height} row IDs but "
+                f"{len(predictions)} predictions."
+            )
+        prediction_frames.append(keys.with_columns(pl.Series("preds", predictions)))
+
+    if prediction_frames:
+        return pl.concat(prediction_frames, how="vertical_relaxed")
+
     return (
-        eval.select("preds")
-        .drop_nans()
-        .drop_nulls()
-        .explode("preds")  # Flatten nested predictions from all folds
+        validation_keys[0]
+        .head(0)
+        .with_columns(pl.Series("preds", [], dtype=pl.Float64))
+        .select(row_id, "fold_number", "preds")
     )
 
 
-def format_log_performance(x: float, th: float, is_percentage: bool = True) -> str:
+def format_log_performance(
+    x: float | None, th: float, is_percentage: bool = True
+) -> str:
     """
     Format performance metric with color coding for Lab's console output.
 
@@ -360,6 +398,9 @@ def format_log_performance(x: float, th: float, is_percentage: bool = True) -> s
     Returns:
         ANSI-colored string (green if x > th, red otherwise)
     """
+    if x is None:
+        return f"{BOLD}{BLUE}N/A{RESET}"
+
     percentage_str: str = "%" if is_percentage else ""
 
     if x > th:  # Improvement: green
@@ -444,7 +485,7 @@ def log_performance_against_multi(
         )
 
 
-def retrieve_predictions_from_path(lab_name: str, experiment_id: int) -> pl.Expr:
+def retrieve_predictions_from_path(lab_name: str, experiment_id: int) -> pl.DataFrame:
     """
     Load predictions from Lab's prediction storage for a specific experiment.
 
@@ -456,18 +497,12 @@ def retrieve_predictions_from_path(lab_name: str, experiment_id: int) -> pl.Expr
         experiment_id: Unique identifier for the experiment
 
     Returns:
-        Polars expression with predictions, or NaN if file is empty/missing
+        Stored prediction DataFrame. Legacy artifacts contain only ``preds``.
     """
-    expr = (
-        pl.read_parquet(f"./{lab_name}/predictions/predictions_{experiment_id}.parquet")
-        .to_series()
-        .alias(f"preds_{experiment_id}")
+    predictions = pl.read_parquet(
+        f"{lab_name}/predictions/predictions_{experiment_id}.parquet"
     )
-
-    if expr.shape[0] > 0:
-        return expr
-    else:
-        return pl.lit(np.nan).alias(f"preds_{experiment_id}")
+    return predictions.rename({"preds": f"preds_{experiment_id}"})
 
 
 # ------------------------------------------------------------------------------------------

@@ -51,9 +51,13 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+# Keep tool caches in one ignored folder instead of the repo root.
+cache_dir = ".cache/pytest"
+tmp_path_retention_policy = "failed"
 
 [tool.coverage.run]
 source = ["empml"]
+data_file = ".cache/coverage"
 
 [tool.coverage.report]
 show_missing = true
@@ -63,6 +67,7 @@ fail_under = 60
 line-length = 88
 target-version = "py311"
 src = ["src"]
+cache-dir = ".cache/ruff"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "UP", "B", "SIM"]
@@ -82,6 +87,7 @@ known-first-party = ["empml"]
 python_version = "3.11"
 ignore_missing_imports = true
 check_untyped_defs = false
+cache_dir = ".cache/mypy"
 
 [tool.bumpversion]
 current_version = "0.2.1"
