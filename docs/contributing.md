@@ -168,6 +168,7 @@ The Lab tests in `tests/test_lab_characterization.py` compare observable results
 | `empml.hpo` | Hyperparameter search space, HPO pipelines, and best-result selection |
 | `empml.baselines` | The baseline model catalog used by `run_base_experiments` |
 | `empml.feature_selection` | Permutation feature importance |
+| `empml.target` | Target transformations and `TransformedTargetRegressor` |
 | `empml.artifacts` | Where a Lab stores pipelines, predictions, and checkpoints on disk |
 | `empml.lab_utils` | Row-ID and prediction-storage helpers, plus compatibility aliases |
 

@@ -97,6 +97,7 @@ nav:
     - Lab: api/lab.md
     - Metrics: api/metrics.md
     - Pipeline: api/pipeline.md
+    - Target: api/target.md
     - Transformers: api/transformers.md
     - Wrappers: api/wrappers.md
   - Examples: examples.md
