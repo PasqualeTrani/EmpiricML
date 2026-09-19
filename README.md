@@ -33,6 +33,9 @@ Keep a detailed ledger of every run. EmpiricML automatically stores:
 ### Polars-Native Pipelines
 Performance is at the heart of EmpiricML. Unlike scikit-learn pipelines which are NumPy-based, EmpiricML transformations utilize Polars LazyFrames. This allows for lightning-fast, memory-efficient data handling even with large datasets.
 
+### Target Engineering
+Skewed targets often train better in log space, but scores measured there are no longer comparable with the rest of your work. `TransformedTargetRegressor` fits the model on a transformed target (log1p, square, square root, cube or reciprocal) and inverts every prediction automatically, so **the metrics in your results table stay in the original units** and transformed experiments sit directly alongside untransformed ones.
+
 ### Automated Workflows
 Stop writing boilerplate code for standard tasks. EmpiricML automates:
 
@@ -155,7 +158,34 @@ best_result_row = lab.hpo(
 )
 ```
 
-### 4. Accessing Experiment Results
+### 4. Target Engineering
+
+To fit on a transformed target, wrap the estimator you would normally pass as the pipeline's final step. Predictions and metrics come back in the original units automatically.
+
+```python
+from empml.target import TransformedTargetRegressor, Log1pTarget
+
+pipe = Pipeline(
+    steps = [
+        ('model', TransformedTargetRegressor(
+            estimator = SKlearnWrapper(
+                estimator=LGBMRegressor(verbose=-1),
+                features=features,
+                target='price',
+            ),
+            transform = Log1pTarget(),
+        ))
+    ],
+    name = 'LGBM_log_target',
+    description = 'LightGBM fitted on log1p(price).'
+)
+
+lab.run_experiment(pipeline=pipe)
+```
+
+Available transformations are `Log1pTarget`, `SquareTarget`, `SqrtTarget`, `CubeTarget` and `ReciprocalTarget`. A target that cannot be inverted (a negative value under `SqrtTarget`, say) fails immediately with a message naming the transformation and the number of offending rows.
+
+### 5. Accessing Experiment Results
 
 All experiment tracking data, including results from single runs and HPO, is stored in the `lab.results` DataFrame. This Polars DataFrame contains metrics, execution times, and metadata for every experiment run in the session.
 
@@ -174,6 +204,7 @@ The library is organized into logical modules found in `src/empml`:
 *   `lab`: The core `Lab` class management.
 *   `pipeline`: Scikit-learn style pipelines compatible with Polars.
 *   `wrappers`: Wrappers for ML algorithms (XGBoost, LightGBM, CatBoost, Sklearn, Pytorch).
+*   `target`: Target engineering with automatic inverse transformation.
 *   `transformers`: Feature engineering blocks.
 *   `metrics`: Performance metrics.
 *   `data`: Tools for handling data loading and downloads.

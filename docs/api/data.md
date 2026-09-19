@@ -83,6 +83,7 @@ def get_data(self) -> pl.LazyFrame:
 Class for reading data from PostgreSQL and returning a Polars LazyFrame.
 
 Requires connectorx (`pip install connectorx`).
+Credentials and database-name URI segments are percent-encoded.
 
 ### Methods
 
@@ -114,6 +115,7 @@ def get_data(self) -> pl.LazyFrame:
 Class for reading data from MySQL and returning a Polars LazyFrame.
 
 Requires connectorx (`pip install connectorx`).
+Credentials and database-name URI segments are percent-encoded.
 
 ### Methods
 
@@ -146,6 +148,7 @@ Class for reading data from Microsoft SQL Server and returning a Polars LazyFram
 
 Also works with Azure SQL Database and Azure Synapse Analytics since they use the same protocol.
 Requires connectorx (`pip install connectorx`).
+Credentials and database-name URI segments are percent-encoded.
 
 ### Methods
 
@@ -177,6 +180,8 @@ def get_data(self) -> pl.LazyFrame:
 Class for reading data from a SQLite database and returning a Polars LazyFrame.
 
 Requires connectorx (`pip install connectorx`).
+Reserved characters in the SQLite file path are percent-encoded while path
+separators are preserved.
 
 ### Methods
 
@@ -200,6 +205,7 @@ def get_data(self) -> pl.LazyFrame:
 Class for reading data from Oracle Database and returning a Polars LazyFrame.
 
 Requires connectorx (`pip install connectorx`).
+Credentials and database-name URI segments are percent-encoded.
 
 ### Methods
 
@@ -231,6 +237,7 @@ def get_data(self) -> pl.LazyFrame:
 Class for reading data from Amazon Redshift and returning a Polars LazyFrame.
 
 Requires connectorx (`pip install connectorx`).
+Credentials and database-name URI segments are percent-encoded.
 
 ### Methods
 

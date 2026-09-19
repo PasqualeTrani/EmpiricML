@@ -166,7 +166,10 @@ def __init__(self, feature_pairs: list[tuple[str, str]], separator: str = '_x_')
 ```
 
 ## MeanTargetEncoder
-Encode categorical features with the mean of a target variable. Unseen categories during transform are filled with the global mean.
+Encode categorical features with the mean of a target variable. Learned null
+categories retain their learned aggregate; genuinely unseen categories are
+filled with the global mean. The same null-category behavior applies to every
+target encoder below.
 
 ### Methods
 
@@ -342,7 +345,9 @@ def __init__(self, features: list[str]):
 ```
 
 ## FrequencyEncoder
-Encode categorical features by their frequency (count) or proportion. Unseen categories during transform are filled with 0.
+Encode categorical features by their frequency (count) or proportion. Learned
+null categories retain their learned frequency; genuinely unseen categories are
+filled with 0.
 
 ### Methods
 
@@ -374,7 +379,7 @@ def __init__(
 ```
 
 ## StandardScaler
-Standardize features by removing the mean and scaling to unit variance (z-score normalization). Handles zero standard deviation by returning 0.
+Standardize features by removing the mean and scaling to unit variance (z-score normalization). Handles zero standard deviation by returning 0 for non-null values while preserving nulls.
 
 ### Methods
 
@@ -392,7 +397,7 @@ def __init__(self, features: list[str], suffix: str = ''):
 ```
 
 ## MinMaxScaler
-Scale features to [0, 1] range using min-max normalization. Handles zero range by returning 0.
+Scale features to [0, 1] range using min-max normalization. Handles zero or all-null ranges without subtracting null statistics, returning 0 for non-null values while preserving nulls.
 
 ### Methods
 
@@ -410,7 +415,7 @@ def __init__(self, features: list[str], suffix: str = ''):
 ```
 
 ## RobustScaler
-Scale features using median and interquartile range (IQR): `(x - median) / (Q75 - Q25)`. Less sensitive to outliers than `StandardScaler`. Handles zero IQR by returning 0.
+Scale features using median and interquartile range (IQR): `(x - median) / (Q75 - Q25)`. Less sensitive to outliers than `StandardScaler`. Handles zero or all-null IQR statistics by returning 0 for non-null values while preserving nulls.
 
 ### Methods
 
@@ -564,7 +569,9 @@ def __init__(
 ```
 
 ## SimpleImputer
-Impute missing values (null and NaN) using mean or median strategy.
+Impute missing values (null and NaN) using mean or median strategy. Both nulls
+and NaNs are excluded when learning the statistic; an all-missing feature uses
+the `0.0` fallback.
 
 ### Methods
 

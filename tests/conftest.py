@@ -4,6 +4,12 @@ import polars as pl
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _isolated_cwd(tmp_path, monkeypatch):
+    """Run each test in its own temp dir so Lab artifacts never land in the repo."""
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.fixture
 def sample_lf() -> pl.LazyFrame:
     """LazyFrame with numeric, nullable, and categorical columns (~20 rows)."""

@@ -40,6 +40,11 @@ def predict_proba(self, lf: pl.LazyFrame) -> np.ndarray:
 ## TorchWrapper
 Wrapper for PyTorch modules compatible with Polars LazyFrames.
 
+The wrapper follows the scikit-learn estimator parameter contract and can be
+cloned. Constructor defaults are resolved only when the skorch estimator is
+created. All additional skorch keyword arguments, including nested parameters,
+are forwarded, and `set_params` resets the fitted estimator.
+
 ### Methods
 
 ```python

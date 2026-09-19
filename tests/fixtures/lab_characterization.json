@@ -1,0 +1,4181 @@
+{
+ "test_experiments_with_comparison_report[single]": {
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "a",
+     "b"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']",
+     "a on ['f2']",
+     "b on ['f1', 'f3']"
+    ],
+    "cv_mean_score": [
+     1.3706380581373458,
+     0.012001600098592987,
+     4.702461548343351,
+     1.201073337464744
+    ],
+    "train_mean_score": [
+     0.666253456087904,
+     0.005727044431912982,
+     2.6183385892593716,
+     0.5303276241143686
+    ],
+    "mean_overfitting_pct": [
+     41.335,
+     52.235,
+     31.87,
+     44.02
+    ],
+    "cv_std_score": [
+     0.46857415247946455,
+     7.307577806904135e-05,
+     2.0400422411284955,
+     0.4472394138356754
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score": "Float64",
+    "train_score": "Float64",
+    "overfitting_pct": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2,
+     2,
+     3,
+     3,
+     4,
+     4
+    ],
+    "fold_number": [
+     1,
+     2,
+     1,
+     2,
+     1,
+     2,
+     1,
+     2
+    ],
+    "validation_score": [
+     1.0393060974303772,
+     1.7019700188443145,
+     0.01205327247680609,
+     0.011949927720379885,
+     3.2599338457343894,
+     6.144989250952311,
+     0.8848273151276412,
+     1.5173193598018466
+    ],
+    "train_score": [
+     1.0418925978831444,
+     0.29061431429266354,
+     0.004381735435511627,
+     0.007072353428314336,
+     3.544000749861032,
+     1.6926764286577114,
+     0.8927346538768773,
+     0.16792059435185988
+    ],
+    "overfitting_pct": [
+     -0.25,
+     82.92,
+     63.65,
+     40.82,
+     -8.71,
+     72.45,
+     -0.89,
+     88.93
+    ]
+   }
+  },
+  "stdout": "\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n",
+  "next_id": 5,
+  "files": [
+   "pipeline_1.pkl",
+   "pipeline_2.pkl",
+   "pipeline_3.pkl",
+   "pipeline_4.pkl",
+   "predictions_1.parquet",
+   "predictions_2.parquet",
+   "predictions_3.parquet",
+   "predictions_4.parquet"
+  ]
+ },
+ "test_experiments_with_comparison_report[multi]": {
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "a",
+     "b"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']",
+     "a on ['f2']",
+     "b on ['f1', 'f3']"
+    ],
+    "cv_mean_score_1": [
+     1.3706380581373458,
+     0.012001600098592987,
+     4.702461548343351,
+     1.201073337464744
+    ],
+    "train_mean_score_1": [
+     0.666253456087904,
+     0.005727044431912982,
+     2.6183385892593716,
+     0.5303276241143686
+    ],
+    "mean_overfitting_pct_1": [
+     41.335,
+     52.235,
+     31.87,
+     44.02
+    ],
+    "cv_std_score_1": [
+     0.46857415247946455,
+     7.307577806904135e-05,
+     2.0400422411284955,
+     0.4472394138356754
+    ],
+    "cv_mean_score_2": [
+     0.9794600781573006,
+     0.09088260309993185,
+     1.696878833952771,
+     0.9251170721431756
+    ],
+    "train_mean_score_2": [
+     0.6680172901784286,
+     0.06338617257142617,
+     1.313679005683805,
+     0.5715292186906504
+    ],
+    "mean_overfitting_pct_2": [
+     26.95,
+     30.310000000000002,
+     19.224999999999998,
+     33.754999999999995
+    ],
+    "cv_std_score_2": [
+     0.19821236171011236,
+     0.0029366246878895046,
+     0.38856936477032317,
+     0.18704615819641834
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score_1": "Float64",
+    "train_score_1": "Float64",
+    "overfitting_pct_1": "Float64",
+    "validation_score_2": "Float64",
+    "train_score_2": "Float64",
+    "overfitting_pct_2": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2,
+     2,
+     3,
+     3,
+     4,
+     4
+    ],
+    "fold_number": [
+     1,
+     2,
+     1,
+     2,
+     1,
+     2,
+     1,
+     2
+    ],
+    "validation_score_1": [
+     1.0393060974303772,
+     1.7019700188443145,
+     0.01205327247680609,
+     0.011949927720379885,
+     3.2599338457343894,
+     6.144989250952311,
+     0.8848273151276412,
+     1.5173193598018466
+    ],
+    "train_score_1": [
+     1.0418925978831444,
+     0.29061431429266354,
+     0.004381735435511627,
+     0.007072353428314336,
+     3.544000749861032,
+     1.6926764286577114,
+     0.8927346538768773,
+     0.16792059435185988
+    ],
+    "overfitting_pct_1": [
+     -0.25,
+     82.92,
+     63.65,
+     40.82,
+     -8.71,
+     72.45,
+     -0.89,
+     88.93
+    ],
+    "validation_score_2": [
+     0.8393027730770793,
+     1.1196173832375218,
+     0.08880609586932535,
+     0.09295911033053834,
+     1.4221188011623263,
+     1.9716388667432156,
+     0.7928554652875964,
+     1.0573786789987547
+    ],
+    "train_score_2": [
+     0.8974422930107412,
+     0.43859228734611605,
+     0.059785989034040365,
+     0.06698635610881198,
+     1.4432521212408773,
+     1.184105890126733,
+     0.7729096518480937,
+     0.3701487855332071
+    ],
+    "overfitting_pct_2": [
+     -6.93,
+     60.83,
+     32.68,
+     27.94,
+     -1.49,
+     39.94,
+     2.52,
+     64.99
+    ]
+   }
+  },
+  "stdout": "\n\u001b[1m\u001b[34m============================================================\n  Metric 1\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 2\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m90.72%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m98.52%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m89.42%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m91.7%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-12.47%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m571.57%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m54.07%\u001b[0m\n",
+  "next_id": 5,
+  "files": [
+   "pipeline_1.pkl",
+   "pipeline_2.pkl",
+   "pipeline_3.pkl",
+   "pipeline_4.pkl",
+   "predictions_1.parquet",
+   "predictions_2.parquet",
+   "predictions_3.parquet",
+   "predictions_4.parquet"
+  ]
+ },
+ "test_early_stopping_arrests_worse_experiment[single]": {
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2
+    ],
+    "name": [
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "lr on ['f3']"
+    ],
+    "cv_mean_score": [
+     0.012001600098592987,
+     1.7147196396580515
+    ],
+    "train_mean_score": [
+     0.005727044431912982,
+     5.469838913850144
+    ],
+    "mean_overfitting_pct": [
+     52.235,
+     -218.99
+    ],
+    "cv_std_score": [
+     7.307577806904135e-05,
+     null
+    ],
+    "is_completed": [
+     true,
+     false
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score": "Float64",
+    "train_score": "Float64",
+    "overfitting_pct": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2
+    ],
+    "fold_number": [
+     1,
+     2,
+     1
+    ],
+    "validation_score": [
+     0.01205327247680609,
+     0.011949927720379885,
+     1.7147196396580515
+    ],
+    "train_score": [
+     0.004381735435511627,
+     0.007072353428314336,
+     5.469838913850144
+    ],
+    "overfitting_pct": [
+     63.65,
+     40.82,
+     -218.99
+    ]
+   }
+  },
+  "stdout": "",
+  "predictions": {
+   "schema": {
+    "row_id": "UInt32",
+    "fold_number": "Int32",
+    "target": "Float64",
+    "preds_1": "Float64",
+    "preds_2": "Float64"
+   },
+   "data": {
+    "row_id": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ],
+    "fold_number": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "target": [
+     1.2553267814228122,
+     -0.2319881332924893,
+     0.719547187865588,
+     -0.8439682389536693,
+     -1.595217374171083,
+     1.0368902321004212,
+     1.6032873681040698,
+     1.885225609751297,
+     -1.5478435622772162,
+     -2.05331676642552,
+     -1.0696461530916441,
+     0.32891005597248907,
+     -5.431658175334669,
+     -0.5041558124810377,
+     -1.6497298432035203,
+     0.15835231775796918,
+     -2.4230440769447332,
+     1.0502342072451207,
+     2.1403977257497036,
+     3.0237789674702413,
+     -0.03589228027702468,
+     2.3454557973287162,
+     0.15260987371959828,
+     2.7664237651229513
+    ],
+    "preds_1": [
+     1.2090924705337058,
+     -0.1732254120007121,
+     0.48734548694940194,
+     -0.7801373432081349,
+     -1.5737481232276749,
+     0.9545955924202564,
+     1.5383635701524394,
+     1.674338613667051,
+     -1.5933781683096524,
+     -1.976429209723495,
+     -1.03261028315461,
+     0.4545208602308448,
+     -5.571294766661208,
+     -0.5833509684204153,
+     -1.7734828998444643,
+     0.060865333460601995,
+     -2.4680583992119614,
+     0.9577253122953502,
+     2.310556531839935,
+     3.0379382759507347,
+     0.02521306557983958,
+     2.5557920420581945,
+     0.16434632496211213,
+     2.836841927268604
+    ],
+    "preds_2": [
+     0.4470324521445904,
+     0.35455424460924817,
+     0.17251338809372208,
+     -0.1250894568298016,
+     0.10373708647577673,
+     0.22936427637200502,
+     -0.14030373090617848,
+     0.17968719478460937,
+     0.18629076866608896,
+     0.2368851895341192,
+     -0.12048947515276849,
+     -0.021190501700043343,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   }
+  }
+ },
+ "test_early_stopping_arrests_worse_experiment[multi]": {
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2
+    ],
+    "name": [
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "lr on ['f3']"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     1.7147196396580515
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     5.469838913850144
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     -218.99
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     null
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     1.1616627284951881
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     1.7959364661883541
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     -54.6
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     null
+    ],
+    "is_completed": [
+     true,
+     false
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score_1": "Float64",
+    "train_score_1": "Float64",
+    "overfitting_pct_1": "Float64",
+    "validation_score_2": "Float64",
+    "train_score_2": "Float64",
+    "overfitting_pct_2": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2
+    ],
+    "fold_number": [
+     1,
+     2,
+     1
+    ],
+    "validation_score_1": [
+     0.01205327247680609,
+     0.011949927720379885,
+     1.7147196396580515
+    ],
+    "train_score_1": [
+     0.004381735435511627,
+     0.007072353428314336,
+     5.469838913850144
+    ],
+    "overfitting_pct_1": [
+     63.65,
+     40.82,
+     -218.99
+    ],
+    "validation_score_2": [
+     0.08880609586932535,
+     0.09295911033053834,
+     1.1616627284951881
+    ],
+    "train_score_2": [
+     0.059785989034040365,
+     0.06698635610881198,
+     1.7959364661883541
+    ],
+    "overfitting_pct_2": [
+     32.68,
+     27.94,
+     -54.6
+    ]
+   }
+  },
+  "stdout": "",
+  "predictions": {
+   "schema": {
+    "row_id": "UInt32",
+    "fold_number": "Int32",
+    "target": "Float64",
+    "preds_1": "Float64",
+    "preds_2": "Float64"
+   },
+   "data": {
+    "row_id": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ],
+    "fold_number": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "target": [
+     1.2553267814228122,
+     -0.2319881332924893,
+     0.719547187865588,
+     -0.8439682389536693,
+     -1.595217374171083,
+     1.0368902321004212,
+     1.6032873681040698,
+     1.885225609751297,
+     -1.5478435622772162,
+     -2.05331676642552,
+     -1.0696461530916441,
+     0.32891005597248907,
+     -5.431658175334669,
+     -0.5041558124810377,
+     -1.6497298432035203,
+     0.15835231775796918,
+     -2.4230440769447332,
+     1.0502342072451207,
+     2.1403977257497036,
+     3.0237789674702413,
+     -0.03589228027702468,
+     2.3454557973287162,
+     0.15260987371959828,
+     2.7664237651229513
+    ],
+    "preds_1": [
+     1.2090924705337058,
+     -0.1732254120007121,
+     0.48734548694940194,
+     -0.7801373432081349,
+     -1.5737481232276749,
+     0.9545955924202564,
+     1.5383635701524394,
+     1.674338613667051,
+     -1.5933781683096524,
+     -1.976429209723495,
+     -1.03261028315461,
+     0.4545208602308448,
+     -5.571294766661208,
+     -0.5833509684204153,
+     -1.7734828998444643,
+     0.060865333460601995,
+     -2.4680583992119614,
+     0.9577253122953502,
+     2.310556531839935,
+     3.0379382759507347,
+     0.02521306557983958,
+     2.5557920420581945,
+     0.16434632496211213,
+     2.836841927268604
+    ],
+    "preds_2": [
+     0.4470324521445904,
+     0.35455424460924817,
+     0.17251338809372208,
+     -0.1250894568298016,
+     0.10373708647577673,
+     0.22936427637200502,
+     -0.14030373090617848,
+     0.17968719478460937,
+     0.18629076866608896,
+     0.2368851895341192,
+     -0.12048947515276849,
+     -0.021190501700043343,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   }
+  }
+ },
+ "test_auto_mode_with_percentage_criterion[single]": {
+  "best": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']",
+     "lr on ['f1', 'f2', 'f3']",
+     "lr on ['f3']"
+    ],
+    "cv_mean_score": [
+     1.3706380581373458,
+     0.012001600098592987,
+     0.012292797139705727,
+     1.7147196396580515
+    ],
+    "train_mean_score": [
+     0.666253456087904,
+     0.005727044431912982,
+     0.004375584572646765,
+     5.469838913850144
+    ],
+    "mean_overfitting_pct": [
+     41.335,
+     52.235,
+     64.41,
+     -218.99
+    ],
+    "cv_std_score": [
+     0.46857415247946455,
+     7.307577806904135e-05,
+     null,
+     null
+    ],
+    "is_completed": [
+     true,
+     true,
+     false,
+     false
+    ]
+   }
+  },
+  "stdout": "\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n"
+ },
+ "test_auto_mode_with_percentage_criterion[multi]": {
+  "best": [
+   1,
+   2,
+   2,
+   2
+  ],
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']",
+     "lr on ['f1', 'f2', 'f3']",
+     "lr on ['f3']"
+    ],
+    "cv_mean_score_1": [
+     1.3706380581373458,
+     0.012001600098592987,
+     0.012292797139705727,
+     1.7147196396580515
+    ],
+    "train_mean_score_1": [
+     0.666253456087904,
+     0.005727044431912982,
+     0.004375584572646765,
+     5.469838913850144
+    ],
+    "mean_overfitting_pct_1": [
+     41.335,
+     52.235,
+     64.41,
+     -218.99
+    ],
+    "cv_std_score_1": [
+     0.46857415247946455,
+     7.307577806904135e-05,
+     null,
+     null
+    ],
+    "cv_mean_score_2": [
+     0.9794600781573006,
+     0.09088260309993185,
+     0.08975551255999592,
+     1.1616627284951881
+    ],
+    "train_mean_score_2": [
+     0.6680172901784286,
+     0.06338617257142617,
+     0.06005984561391306,
+     1.7959364661883541
+    ],
+    "mean_overfitting_pct_2": [
+     26.95,
+     30.310000000000002,
+     33.09,
+     -54.6
+    ],
+    "cv_std_score_2": [
+     0.19821236171011236,
+     0.0029366246878895046,
+     null,
+     null
+    ],
+    "is_completed": [
+     true,
+     true,
+     false,
+     false
+    ]
+   }
+  },
+  "stdout": "\n\u001b[1m\u001b[34m============================================================\n  Metric 1\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 2\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m90.72%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m98.52%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m89.42%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m91.7%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-12.47%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m571.57%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m54.07%\u001b[0m\n"
+ },
+ "test_auto_mode_with_statistical_criterion[single]": {
+  "best": [
+   2,
+   2
+  ],
+  "pvalue": 0.0625,
+  "pvalue_type": "float64",
+  "stdout": "\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[31m-16.28%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[31m-3117.37%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.99%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-30.69%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[31m0\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-27.19%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.19%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-67.74%\u001b[0m\n"
+ },
+ "test_auto_mode_with_statistical_criterion[multi]": {
+  "best": [
+   2,
+   2
+  ],
+  "pvalue": [
+   0.0625,
+   0.0625
+  ],
+  "pvalue_type": "list",
+  "stdout": "\n\u001b[1m\u001b[34m============================================================\n  Metric 1\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 2\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m90.72%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m98.52%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m89.42%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m91.7%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-12.47%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m571.57%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m54.07%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 1\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[31m-16.28%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[31m-3117.37%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.99%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-30.69%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[31m0\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-27.19%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.19%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-67.74%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 2\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[31m-7.57%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[31m-285.69%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.07%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[31m-13.78%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[31m0\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-25.98%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-1.25%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[31m-54.9%\u001b[0m\n"
+ },
+ "test_retrieve_predictions_and_pipeline[single]": {
+  "predictions": {
+   "schema": {
+    "row_id": "UInt32",
+    "fold_number": "Int32",
+    "target": "Float64",
+    "f1": "Float64",
+    "preds_1": "Float64",
+    "preds_2": "Float64",
+    "preds_3": "Float64"
+   },
+   "data": {
+    "row_id": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ],
+    "fold_number": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "target": [
+     1.2553267814228122,
+     -0.2319881332924893,
+     0.719547187865588,
+     -0.8439682389536693,
+     -1.595217374171083,
+     1.0368902321004212,
+     1.6032873681040698,
+     1.885225609751297,
+     -1.5478435622772162,
+     -2.05331676642552,
+     -1.0696461530916441,
+     0.32891005597248907,
+     -5.431658175334669,
+     -0.5041558124810377,
+     -1.6497298432035203,
+     0.15835231775796918,
+     -2.4230440769447332,
+     1.0502342072451207,
+     2.1403977257497036,
+     3.0237789674702413,
+     -0.03589228027702468,
+     2.3454557973287162,
+     0.15260987371959828,
+     2.7664237651229513
+    ],
+    "f1": [
+     0.1257302210933933,
+     -0.1321048632913019,
+     0.6404226504432821,
+     0.10490011715303971,
+     -0.535669373161111,
+     0.36159505490948474,
+     1.3040000451301372,
+     0.9470809631292422,
+     -0.7037352358069926,
+     -1.2654214710460525,
+     -0.6232744625373522,
+     0.0413259793472436,
+     -2.3250307746388343,
+     -0.21879166393254573,
+     -1.2459109472530652,
+     -0.7322673547034516,
+     -0.5442589828573099,
+     -0.31630015636915454,
+     0.4116305363741328,
+     1.0425133694426776,
+     -0.12853466294403426,
+     1.3664634705496859,
+     -0.6651946734866135,
+     0.3515100700930197
+    ],
+    "preds_1": [
+     0.9675083137845834,
+     0.3951936760094309,
+     2.109967308346768,
+     0.9212718854882104,
+     -0.5005954941736344,
+     1.4910557481901616,
+     3.5829051638845146,
+     2.7906545063843615,
+     -0.8736500516326728,
+     -2.1204208510034244,
+     -0.6950518658240377,
+     0.7801568400434813,
+     -4.00517197150382,
+     -0.44936316202518245,
+     -2.183373216938547,
+     -1.3162264613606793,
+     -0.9988257344118431,
+     -0.6139795888319224,
+     0.6149323408675039,
+     1.6800054962234139,
+     -0.2969888956844292,
+     2.2269066611920603,
+     -1.2029925794458145,
+     0.5134353728615023
+    ],
+    "preds_2": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "preds_3": [
+     1.2090924705337058,
+     -0.1732254120007121,
+     0.48734548694940194,
+     -0.7801373432081349,
+     -1.5737481232276749,
+     0.9545955924202564,
+     1.5383635701524394,
+     1.674338613667051,
+     -1.5933781683096524,
+     -1.976429209723495,
+     -1.03261028315461,
+     0.4545208602308448,
+     -5.571294766661208,
+     -0.5833509684204153,
+     -1.7734828998444643,
+     0.060865333460601995,
+     -2.4680583992119614,
+     0.9577253122953502,
+     2.310556531839935,
+     3.0379382759507347,
+     0.02521306557983958,
+     2.5557920420581945,
+     0.16434632496211213,
+     2.836841927268604
+    ]
+   }
+  },
+  "pipeline": "Pipeline(with estimator)[\n    ('model', EstimatorWrapper(LinearRegression(), features=['f1', 'f2'], target='target'))\n]",
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f2']",
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score": [
+     1.3706380581373458,
+     4.702461548343351,
+     0.012001600098592987
+    ],
+    "train_mean_score": [
+     0.666253456087904,
+     2.6183385892593716,
+     "NaN"
+    ],
+    "mean_overfitting_pct": [
+     41.335,
+     31.87,
+     "NaN"
+    ],
+    "cv_std_score": [
+     0.46857415247946455,
+     2.0400422411284955,
+     7.307577806904135e-05
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score": "Float64",
+    "train_score": "Float64",
+    "overfitting_pct": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2,
+     2,
+     3,
+     3
+    ],
+    "fold_number": [
+     1,
+     2,
+     1,
+     2,
+     1,
+     2
+    ],
+    "validation_score": [
+     1.0393060974303772,
+     1.7019700188443145,
+     3.2599338457343894,
+     6.144989250952311,
+     0.01205327247680609,
+     0.011949927720379885
+    ],
+    "train_score": [
+     1.0418925978831444,
+     0.29061431429266354,
+     3.544000749861032,
+     1.6926764286577114,
+     "NaN",
+     "NaN"
+    ],
+    "overfitting_pct": [
+     -0.25,
+     82.92,
+     -8.71,
+     72.45,
+     "NaN",
+     "NaN"
+    ]
+   }
+  }
+ },
+ "test_retrieve_predictions_and_pipeline[multi]": {
+  "predictions": {
+   "schema": {
+    "row_id": "UInt32",
+    "fold_number": "Int32",
+    "target": "Float64",
+    "f1": "Float64",
+    "preds_1": "Float64",
+    "preds_2": "Float64",
+    "preds_3": "Float64"
+   },
+   "data": {
+    "row_id": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ],
+    "fold_number": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "target": [
+     1.2553267814228122,
+     -0.2319881332924893,
+     0.719547187865588,
+     -0.8439682389536693,
+     -1.595217374171083,
+     1.0368902321004212,
+     1.6032873681040698,
+     1.885225609751297,
+     -1.5478435622772162,
+     -2.05331676642552,
+     -1.0696461530916441,
+     0.32891005597248907,
+     -5.431658175334669,
+     -0.5041558124810377,
+     -1.6497298432035203,
+     0.15835231775796918,
+     -2.4230440769447332,
+     1.0502342072451207,
+     2.1403977257497036,
+     3.0237789674702413,
+     -0.03589228027702468,
+     2.3454557973287162,
+     0.15260987371959828,
+     2.7664237651229513
+    ],
+    "f1": [
+     0.1257302210933933,
+     -0.1321048632913019,
+     0.6404226504432821,
+     0.10490011715303971,
+     -0.535669373161111,
+     0.36159505490948474,
+     1.3040000451301372,
+     0.9470809631292422,
+     -0.7037352358069926,
+     -1.2654214710460525,
+     -0.6232744625373522,
+     0.0413259793472436,
+     -2.3250307746388343,
+     -0.21879166393254573,
+     -1.2459109472530652,
+     -0.7322673547034516,
+     -0.5442589828573099,
+     -0.31630015636915454,
+     0.4116305363741328,
+     1.0425133694426776,
+     -0.12853466294403426,
+     1.3664634705496859,
+     -0.6651946734866135,
+     0.3515100700930197
+    ],
+    "preds_1": [
+     0.9675083137845834,
+     0.3951936760094309,
+     2.109967308346768,
+     0.9212718854882104,
+     -0.5005954941736344,
+     1.4910557481901616,
+     3.5829051638845146,
+     2.7906545063843615,
+     -0.8736500516326728,
+     -2.1204208510034244,
+     -0.6950518658240377,
+     0.7801568400434813,
+     -4.00517197150382,
+     -0.44936316202518245,
+     -2.183373216938547,
+     -1.3162264613606793,
+     -0.9988257344118431,
+     -0.6139795888319224,
+     0.6149323408675039,
+     1.6800054962234139,
+     -0.2969888956844292,
+     2.2269066611920603,
+     -1.2029925794458145,
+     0.5134353728615023
+    ],
+    "preds_2": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "preds_3": [
+     1.2090924705337058,
+     -0.1732254120007121,
+     0.48734548694940194,
+     -0.7801373432081349,
+     -1.5737481232276749,
+     0.9545955924202564,
+     1.5383635701524394,
+     1.674338613667051,
+     -1.5933781683096524,
+     -1.976429209723495,
+     -1.03261028315461,
+     0.4545208602308448,
+     -5.571294766661208,
+     -0.5833509684204153,
+     -1.7734828998444643,
+     0.060865333460601995,
+     -2.4680583992119614,
+     0.9577253122953502,
+     2.310556531839935,
+     3.0379382759507347,
+     0.02521306557983958,
+     2.5557920420581945,
+     0.16434632496211213,
+     2.836841927268604
+    ]
+   }
+  },
+  "pipeline": "Pipeline(with estimator)[\n    ('model', EstimatorWrapper(LinearRegression(), features=['f1', 'f2'], target='target'))\n]",
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "lr",
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f2']",
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     1.3706380581373458,
+     4.702461548343351,
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.666253456087904,
+     2.6183385892593716,
+     "NaN"
+    ],
+    "mean_overfitting_pct_1": [
+     41.335,
+     31.87,
+     "NaN"
+    ],
+    "cv_std_score_1": [
+     0.46857415247946455,
+     2.0400422411284955,
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.9794600781573006,
+     1.696878833952771,
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.6680172901784286,
+     1.313679005683805,
+     "NaN"
+    ],
+    "mean_overfitting_pct_2": [
+     26.95,
+     19.224999999999998,
+     "NaN"
+    ],
+    "cv_std_score_2": [
+     0.19821236171011236,
+     0.38856936477032317,
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  },
+  "details": {
+   "schema": {
+    "experiment_id": "Int64",
+    "fold_number": "Int64",
+    "validation_score_1": "Float64",
+    "train_score_1": "Float64",
+    "overfitting_pct_1": "Float64",
+    "validation_score_2": "Float64",
+    "train_score_2": "Float64",
+    "overfitting_pct_2": "Float64"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     1,
+     2,
+     2,
+     3,
+     3
+    ],
+    "fold_number": [
+     1,
+     2,
+     1,
+     2,
+     1,
+     2
+    ],
+    "validation_score_1": [
+     1.0393060974303772,
+     1.7019700188443145,
+     3.2599338457343894,
+     6.144989250952311,
+     0.01205327247680609,
+     0.011949927720379885
+    ],
+    "train_score_1": [
+     1.0418925978831444,
+     0.29061431429266354,
+     3.544000749861032,
+     1.6926764286577114,
+     "NaN",
+     "NaN"
+    ],
+    "overfitting_pct_1": [
+     -0.25,
+     82.92,
+     -8.71,
+     72.45,
+     "NaN",
+     "NaN"
+    ],
+    "validation_score_2": [
+     0.8393027730770793,
+     1.1196173832375218,
+     1.4221188011623263,
+     1.9716388667432156,
+     0.08880609586932535,
+     0.09295911033053834
+    ],
+    "train_score_2": [
+     0.8974422930107412,
+     0.43859228734611605,
+     1.4432521212408773,
+     1.184105890126733,
+     "NaN",
+     "NaN"
+    ],
+    "overfitting_pct_2": [
+     -6.93,
+     60.83,
+     -1.49,
+     39.94,
+     "NaN",
+     "NaN"
+    ]
+   }
+  }
+ },
+ "test_show_best_score[single]": {
+  "default": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     2
+    ],
+    "name": [
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score": [
+     0.012001600098592987
+    ],
+    "train_mean_score": [
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct": [
+     52.235
+    ],
+    "cv_std_score": [
+     7.307577806904135e-05
+    ],
+    "is_completed": [
+     true
+    ]
+   }
+  },
+  "second": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     2
+    ],
+    "name": [
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score": [
+     0.012001600098592987
+    ],
+    "train_mean_score": [
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct": [
+     52.235
+    ],
+    "cv_std_score": [
+     7.307577806904135e-05
+    ],
+    "is_completed": [
+     true
+    ]
+   }
+  }
+ },
+ "test_show_best_score[multi]": {
+  "default": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     2
+    ],
+    "name": [
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct_1": [
+     52.235
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true
+    ]
+   }
+  },
+  "second": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     2
+    ],
+    "name": [
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct_1": [
+     52.235
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true
+    ]
+   }
+  }
+ },
+ "test_run_experiment_on_test[single]": {
+  "keys": [
+   "validation_score",
+   "train_score",
+   "overfitting",
+   "duration_train",
+   "duration_inf",
+   "preds"
+  ],
+  "result": {
+   "validation_score": 0.017594012090800634,
+   "train_score": 0.007007020856422501,
+   "overfitting": 60.17,
+   "duration_train": "<volatile>",
+   "duration_inf": "<volatile>",
+   "preds": [
+    0.749145216314776,
+    2.267377733040713,
+    -0.08567135108120799,
+    -2.8237849844872636,
+    1.3573892980881819,
+    1.5547536136719153,
+    -1.0438622000111706,
+    0.8936125576633241,
+    -0.06363081118126154,
+    0.3437573525975355
+   ]
+  },
+  "no_overfit": {
+   "validation_score": 0.017594012090800634,
+   "train_score": "NaN",
+   "overfitting": "NaN",
+   "duration_train": "<volatile>",
+   "duration_inf": "<volatile>",
+   "preds": "NaN"
+  },
+  "stdout": "Difference in performance CV vs Test: \u001b[1m\u001b[31m-46.6%\u001b[0m\n\u001b[1m\u001b[31m The test score is NOT between \u03bc \u00b1 2\u03c3\u001b[0m\nDifference in performance CV vs Test: \u001b[1m\u001b[31m-46.6%\u001b[0m\n\u001b[1m\u001b[31m The test score is NOT between \u03bc \u00b1 2\u03c3\u001b[0m\n"
+ },
+ "test_run_experiment_on_test[multi]": {
+  "keys": [
+   "duration_train",
+   "duration_inf",
+   "preds",
+   "validation_score_1",
+   "train_score_1",
+   "overfitting_1",
+   "validation_score_2",
+   "train_score_2",
+   "overfitting_2"
+  ],
+  "result": {
+   "duration_train": "<volatile>",
+   "duration_inf": "<volatile>",
+   "preds": [
+    0.749145216314776,
+    2.267377733040713,
+    -0.08567135108120799,
+    -2.8237849844872636,
+    1.3573892980881819,
+    1.5547536136719153,
+    -1.0438622000111706,
+    0.8936125576633241,
+    -0.06363081118126154,
+    0.3437573525975355
+   ],
+   "validation_score_1": 0.017594012090800634,
+   "train_score_1": 0.007007020856422501,
+   "overfitting_1": 60.17,
+   "validation_score_2": 0.09561483662184059,
+   "train_score_2": 0.06877056919412748,
+   "overfitting_2": 28.08
+  },
+  "no_overfit": {
+   "duration_train": "<volatile>",
+   "duration_inf": "<volatile>",
+   "preds": "NaN",
+   "validation_score_1": 0.017594012090800634,
+   "train_score_1": "NaN",
+   "overfitting_1": "NaN",
+   "validation_score_2": 0.09561483662184059,
+   "train_score_2": "NaN",
+   "overfitting_2": "NaN"
+  },
+  "stdout": "Metric 1 - CV vs Test: \u001b[1m\u001b[31m-46.6%\u001b[0m\n\u001b[1m\u001b[31m Metric 1: test score NOT within \u03bc \u00b1 2\u03c3\u001b[0m\nMetric 2 - CV vs Test: \u001b[1m\u001b[31m-5.21%\u001b[0m\n\u001b[1m\u001b[32m Metric 2: test score within \u03bc \u00b1 2\u03c3\u001b[0m\nMetric 1 - CV vs Test: \u001b[1m\u001b[31m-46.6%\u001b[0m\n\u001b[1m\u001b[31m Metric 1: test score NOT within \u03bc \u00b1 2\u03c3\u001b[0m\nMetric 2 - CV vs Test: \u001b[1m\u001b[31m-5.21%\u001b[0m\n\u001b[1m\u001b[32m Metric 2: test score within \u03bc \u00b1 2\u03c3\u001b[0m\n"
+ },
+ "test_run_experiment_on_test_interval_upper_bound[single]": "Difference in performance CV vs Test: \u001b[1m\u001b[31m0.0%\u001b[0m\n\u001b[1m\u001b[31m The test score is NOT between \u03bc \u00b1 2\u03c3\u001b[0m\n",
+ "test_run_experiment_on_test_interval_upper_bound[multi]": "Metric 1 - CV vs Test: \u001b[1m\u001b[31m0.0%\u001b[0m\n\u001b[1m\u001b[32m Metric 1: test score within \u03bc \u00b1 2\u03c3\u001b[0m\nMetric 2 - CV vs Test: \u001b[1m\u001b[31m-5.21%\u001b[0m\n\u001b[1m\u001b[32m Metric 2: test score within \u03bc \u00b1 2\u03c3\u001b[0m\n",
+ "test_hpo[grid-single]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.01, fit_intercept=False)",
+   "description": "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score": 0.011352363171413223,
+   "train_mean_score": 0.005860004881956473,
+   "mean_overfitting_pct": 48.185,
+   "cv_std_score": 0.00023539645203804802,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.01, fit_intercept=False), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "name": [
+     "Ridge(alpha=0.01)",
+     "Ridge(alpha=0.01, fit_intercept=False)",
+     "Ridge()",
+     "Ridge(fit_intercept=False)",
+     "Ridge(alpha=50.0)",
+     "Ridge(alpha=50.0, fit_intercept=False)"
+    ],
+    "description": [
+     "Ridge(alpha=0.01) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge() with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score": [
+     0.011557023717800345,
+     0.011352363171413223,
+     0.2071977805142239,
+     0.20072832822146602,
+     3.0205522232234907,
+     3.007949053772849
+    ],
+    "train_mean_score": [
+     0.00573671321492827,
+     0.005860004881956473,
+     0.06253152299556537,
+     0.062354432655245595,
+     2.454613110743516,
+     2.4555805554323262
+    ],
+    "mean_overfitting_pct": [
+     49.57000000000001,
+     48.185,
+     39.07,
+     36.5,
+     -65.88,
+     -66.415
+    ],
+    "cv_std_score": [
+     0.0008992637113880138,
+     0.00023539645203804802,
+     0.2441086189275747,
+     0.23703572973606243,
+     2.6413225631838273,
+     2.6285489933655155
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo[grid-multi]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.01, fit_intercept=False)",
+   "description": "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011352363171413223,
+   "train_mean_score_1": 0.005860004881956473,
+   "mean_overfitting_pct_1": 48.185,
+   "cv_std_score_1": 0.00023539645203804802,
+   "cv_mean_score_2": 0.08915899770735605,
+   "train_mean_score_2": 0.0657024152245558,
+   "mean_overfitting_pct_2": 26.365000000000002,
+   "cv_std_score_2": 0.0011459584593378534,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.01, fit_intercept=False), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "name": [
+     "Ridge(alpha=0.01)",
+     "Ridge(alpha=0.01, fit_intercept=False)",
+     "Ridge()",
+     "Ridge(fit_intercept=False)",
+     "Ridge(alpha=50.0)",
+     "Ridge(alpha=50.0, fit_intercept=False)"
+    ],
+    "description": [
+     "Ridge(alpha=0.01) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge() with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.011557023717800345,
+     0.011352363171413223,
+     0.2071977805142239,
+     0.20072832822146602,
+     3.0205522232234907,
+     3.007949053772849
+    ],
+    "train_mean_score_1": [
+     0.00573671321492827,
+     0.005860004881956473,
+     0.06253152299556537,
+     0.062354432655245595,
+     2.454613110743516,
+     2.4555805554323262
+    ],
+    "mean_overfitting_pct_1": [
+     49.57000000000001,
+     48.185,
+     39.07,
+     36.5,
+     -65.88,
+     -66.415
+    ],
+    "cv_std_score_1": [
+     0.0008992637113880138,
+     0.00023539645203804802,
+     0.2441086189275747,
+     0.23703572973606243,
+     2.6413225631838273,
+     2.6285489933655155
+    ],
+    "cv_mean_score_2": [
+     0.08832744931838124,
+     0.08915899770735605,
+     0.3350788080634026,
+     0.3303200681200258,
+     1.3502324772005105,
+     1.3439195596881446
+    ],
+    "train_mean_score_2": [
+     0.06358652568159046,
+     0.0657024152245558,
+     0.19983222399049277,
+     0.19905695747232777,
+     1.2491135207044048,
+     1.2491753510409276
+    ],
+    "mean_overfitting_pct_2": [
+     27.935,
+     26.365000000000002,
+     31.985,
+     31.885,
+     -4.600000000000001,
+     -4.720000000000002
+    ],
+    "cv_std_score_2": [
+     0.0016509667749094873,
+     0.0011459584593378534,
+     0.24211416544392939,
+     0.2351525773466743,
+     0.546420568439168,
+     0.5347644521364824
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo[random-single]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.01, fit_intercept=False)",
+   "description": "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score": 0.011352363171413223,
+   "train_mean_score": 0.005860004881956473,
+   "mean_overfitting_pct": 48.185,
+   "cv_std_score": 0.00023539645203804802,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.01, fit_intercept=False), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "Ridge()",
+     "Ridge(alpha=0.01, fit_intercept=False)",
+     "Ridge(alpha=50.0)"
+    ],
+    "description": [
+     "Ridge() with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score": [
+     0.2071977805142239,
+     0.011352363171413223,
+     3.0205522232234907
+    ],
+    "train_mean_score": [
+     0.06253152299556537,
+     0.005860004881956473,
+     2.454613110743516
+    ],
+    "mean_overfitting_pct": [
+     39.07,
+     48.185,
+     -65.88
+    ],
+    "cv_std_score": [
+     0.2441086189275747,
+     0.00023539645203804802,
+     2.6413225631838273
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo[random-multi]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.01, fit_intercept=False)",
+   "description": "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011352363171413223,
+   "train_mean_score_1": 0.005860004881956473,
+   "mean_overfitting_pct_1": 48.185,
+   "cv_std_score_1": 0.00023539645203804802,
+   "cv_mean_score_2": 0.08915899770735605,
+   "train_mean_score_2": 0.0657024152245558,
+   "mean_overfitting_pct_2": 26.365000000000002,
+   "cv_std_score_2": 0.0011459584593378534,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.01, fit_intercept=False), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "Ridge()",
+     "Ridge(alpha=0.01, fit_intercept=False)",
+     "Ridge(alpha=50.0)"
+    ],
+    "description": [
+     "Ridge() with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=0.01, fit_intercept=False) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=50.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.2071977805142239,
+     0.011352363171413223,
+     3.0205522232234907
+    ],
+    "train_mean_score_1": [
+     0.06253152299556537,
+     0.005860004881956473,
+     2.454613110743516
+    ],
+    "mean_overfitting_pct_1": [
+     39.07,
+     48.185,
+     -65.88
+    ],
+    "cv_std_score_1": [
+     0.2441086189275747,
+     0.00023539645203804802,
+     2.6413225631838273
+    ],
+    "cv_mean_score_2": [
+     0.3350788080634026,
+     0.08915899770735605,
+     1.3502324772005105
+    ],
+    "train_mean_score_2": [
+     0.19983222399049277,
+     0.0657024152245558,
+     1.2491135207044048
+    ],
+    "mean_overfitting_pct_2": [
+     31.985,
+     26.365000000000002,
+     -4.600000000000001
+    ],
+    "cv_std_score_2": [
+     0.24211416544392939,
+     0.0011459584593378534,
+     0.546420568439168
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[free-0]": {
+  "result": {
+   "experiment_id": 1,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[free-1]": {
+  "result": {
+   "experiment_id": 1,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[free-all]": {
+  "result": {
+   "experiment_id": 1,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-0]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-1]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-all]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=0.001)",
+   "description": "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 0.011952884188761708,
+   "train_mean_score_1": 0.005727141702901204,
+   "mean_overfitting_pct_1": 51.974999999999994,
+   "cv_std_score_1": 0.00016158378113520668,
+   "cv_mean_score_2": 0.09062610299844989,
+   "train_mean_score_2": 0.06338798722931921,
+   "mean_overfitting_pct_2": 30.105,
+   "cv_std_score_2": 0.0024763924479725384,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=0.001), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=0.001)",
+     "Ridge(alpha=5.0)",
+     "Ridge(alpha=100.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=0.001) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=5.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=100.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     0.011952884188761708,
+     1.212337716578067,
+     3.2960353663761315
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     0.005727141702901204,
+     0.4841415892050235,
+     2.938907071668703
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     51.974999999999994,
+     -23.104999999999997,
+     -69.89999999999999
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     0.00016158378113520668,
+     1.4336983605155218,
+     2.6865401530725745
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     0.09062610299844989,
+     0.8130999985858037,
+     1.4178473596644636
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     0.06338798722931921,
+     0.5784403719994472,
+     1.3525583933937373
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     30.105,
+     9.98,
+     -6.109999999999999
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.0024763924479725384,
+     0.5909458976064448,
+     0.5053556140526088
+    ],
+    "is_completed": [
+     true,
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-unbeaten-0]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=20.0)",
+   "description": "Ridge(alpha=20.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 2.433540760606455,
+   "train_mean_score_1": 1.5893519749923501,
+   "mean_overfitting_pct_1": -55.585,
+   "cv_std_score_1": 2.420628956278132,
+   "cv_mean_score_2": 1.195211535872187,
+   "train_mean_score_2": 1.0267307850173704,
+   "mean_overfitting_pct_2": -0.9500000000000028,
+   "cv_std_score_2": 0.6130118112789682,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=20.0), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=20.0)",
+     "Ridge(alpha=90.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=20.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=90.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     2.433540760606455,
+     3.2625221708898273
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     1.5893519749923501,
+     2.877417573385775
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     -55.585,
+     -69.435
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     2.420628956278132,
+     2.6829482142034893
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     1.195211535872187,
+     1.4097869206341747
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     1.0267307850173704,
+     1.3399000705644957
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     -0.9500000000000028,
+     -5.920000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.6130118112789682,
+     0.5106011086260696
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-unbeaten-1]": {
+  "result": {
+   "experiment_id": 2,
+   "name": "Ridge(alpha=20.0)",
+   "description": "Ridge(alpha=20.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+   "cv_mean_score_1": 2.433540760606455,
+   "train_mean_score_1": 1.5893519749923501,
+   "mean_overfitting_pct_1": -55.585,
+   "cv_std_score_1": 2.420628956278132,
+   "cv_mean_score_2": 1.195211535872187,
+   "train_mean_score_2": 1.0267307850173704,
+   "mean_overfitting_pct_2": -0.9500000000000028,
+   "cv_std_score_2": 0.6130118112789682,
+   "mean_train_time_s": "<volatile>",
+   "mean_inference_time_s": "<volatile>",
+   "is_completed": true,
+   "timestamp_utc": "<volatile>",
+   "best_pipeline": "Pipeline(with estimator)[\n    ('preprocessor', Identity()),\n    ('estimator', EstimatorWrapper(Ridge(alpha=20.0), features=['f1', 'f2'], target='target'))\n]"
+  },
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=20.0)",
+     "Ridge(alpha=90.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=20.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=90.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     2.433540760606455,
+     3.2625221708898273
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     1.5893519749923501,
+     2.877417573385775
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     -55.585,
+     -69.435
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     2.420628956278132,
+     2.6829482142034893
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     1.195211535872187,
+     1.4097869206341747
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     1.0267307850173704,
+     1.3399000705644957
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     -0.9500000000000028,
+     -5.920000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.6130118112789682,
+     0.5106011086260696
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_hpo_multi_metric_selection[baseline-unbeaten-all]": {
+  "result": null,
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2,
+     3
+    ],
+    "name": [
+     "lr",
+     "Ridge(alpha=20.0)",
+     "Ridge(alpha=90.0)"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']",
+     "Ridge(alpha=20.0) with features=['f1', 'f2'] and preprocessor=Identity()",
+     "Ridge(alpha=90.0) with features=['f1', 'f2'] and preprocessor=Identity()"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987,
+     2.433540760606455,
+     3.2625221708898273
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982,
+     1.5893519749923501,
+     2.877417573385775
+    ],
+    "mean_overfitting_pct_1": [
+     52.235,
+     -55.585,
+     -69.435
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05,
+     2.420628956278132,
+     2.6829482142034893
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185,
+     1.195211535872187,
+     1.4097869206341747
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617,
+     1.0267307850173704,
+     1.3399000705644957
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002,
+     -0.9500000000000028,
+     -5.920000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046,
+     0.6130118112789682,
+     0.5106011086260696
+    ],
+    "is_completed": [
+     true,
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_run_base_experiments_builds_catalog[raw-regression]": {
+  "kwargs": {
+   "eval_overfitting": true,
+   "store_preds": true,
+   "verbose": false,
+   "compare_against": null
+  },
+  "pipelines": [
+   {
+    "name": "linear_regression_base",
+    "description": "linear_regression_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', LinearRegression())])",
+    "preprocess": null
+   },
+   {
+    "name": "knn_base",
+    "description": "knn_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', KNeighborsRegressor())])",
+    "preprocess": null
+   },
+   {
+    "name": "svm_base",
+    "description": "svm_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', SVR())])",
+    "preprocess": null
+   },
+   {
+    "name": "random_forest_base",
+    "description": "random_forest_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()),\n                ('reg', RandomForestRegressor(n_jobs=-1, random_state=0))])",
+    "preprocess": null
+   },
+   {
+    "name": "decision_tree_base",
+    "description": "decision_tree_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('reg', DecisionTreeRegressor())])",
+    "preprocess": null
+   },
+   {
+    "name": "lightgbm_base",
+    "description": "lightgbm_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "LGBMRegressor(verbose=-1)",
+    "preprocess": null
+   },
+   {
+    "name": "xgboost_base",
+    "description": "xgboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "XGBRegressor(base_score=None, booster=None, callbacks=None,\n             colsample_bylevel=None, colsample_bynode=None,\n             colsample_bytree=None, device=None, early_stopping_rounds=None,\n             enable_categorical=True, eval_metric=None, feature_types=None,\n             feature_weights=None, gamma=None, grow_policy=None,\n             importance_type=None, interaction_constraints=None,\n             learning_rate=None, max_bin=None, max_cat_threshold=None,\n             max_cat_to_onehot=None, max_delta_step=None, max_depth=None,\n             max_leaves=None, min_child_weight=None, missing=nan,\n             monotone_constraints=None, multi_strategy=None, n_estimators=None,\n             n_jobs=None, num_parallel_tree=None, ...)",
+    "preprocess": null
+   },
+   {
+    "name": "catboost_base",
+    "description": "catboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "CatBoostRegressor(loss_function='RMSE', verbose=0)",
+    "preprocess": null
+   },
+   {
+    "name": "hgb_base",
+    "description": "hgb_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "HistGradientBoostingRegressor()",
+    "preprocess": null
+   },
+   {
+    "name": "mlp_base",
+    "description": "mlp_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('imputer', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', MLPRegressor(hidden_layer_sizes=(64, 32)))])",
+    "preprocess": null
+   }
+  ]
+ },
+ "test_run_base_experiments_builds_catalog[raw-classification]": {
+  "kwargs": {
+   "eval_overfitting": true,
+   "store_preds": true,
+   "verbose": false,
+   "compare_against": null
+  },
+  "pipelines": [
+   {
+    "name": "logistic_regression_base",
+    "description": "logistic_regression_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', LogisticRegression(max_iter=1000))])",
+    "preprocess": null
+   },
+   {
+    "name": "knn_base",
+    "description": "knn_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', KNeighborsClassifier())])",
+    "preprocess": null
+   },
+   {
+    "name": "svm_base",
+    "description": "svm_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', SVC())])",
+    "preprocess": null
+   },
+   {
+    "name": "random_forest_base",
+    "description": "random_forest_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()),\n                ('clf', RandomForestClassifier(n_jobs=-1, random_state=0))])",
+    "preprocess": null
+   },
+   {
+    "name": "decision_tree_base",
+    "description": "decision_tree_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('clf', DecisionTreeClassifier())])",
+    "preprocess": null
+   },
+   {
+    "name": "lightgbm_base",
+    "description": "lightgbm_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "LGBMClassifier(random_state=0, verbose=-1)",
+    "preprocess": null
+   },
+   {
+    "name": "xgboost_base",
+    "description": "xgboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "XGBClassifier(base_score=None, booster=None, callbacks=None,\n              colsample_bylevel=None, colsample_bynode=None,\n              colsample_bytree=None, device=None, early_stopping_rounds=None,\n              enable_categorical=True, eval_metric=None, feature_types=None,\n              feature_weights=None, gamma=None, grow_policy=None,\n              importance_type=None, interaction_constraints=None,\n              learning_rate=None, max_bin=None, max_cat_threshold=None,\n              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,\n              max_leaves=None, min_child_weight=None, missing=nan,\n              monotone_constraints=None, multi_strategy=None, n_estimators=None,\n              n_jobs=None, num_parallel_tree=None, ...)",
+    "preprocess": null
+   },
+   {
+    "name": "catboost_base",
+    "description": "catboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "CatBoostClassifier(random_state=0, verbose=0)",
+    "preprocess": null
+   },
+   {
+    "name": "hgb_base",
+    "description": "hgb_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "HistGradientBoostingClassifier()",
+    "preprocess": null
+   },
+   {
+    "name": "mlp_base",
+    "description": "mlp_base with features = ['f1', 'f2']",
+    "steps": [
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('imputer', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', MLPClassifier(hidden_layer_sizes=(64, 32)))])",
+    "preprocess": null
+   }
+  ]
+ },
+ "test_run_base_experiments_builds_catalog[prep-regression]": {
+  "kwargs": {
+   "eval_overfitting": true,
+   "store_preds": true,
+   "verbose": false,
+   "compare_against": null
+  },
+  "pipelines": [
+   {
+    "name": "linear_regression_base",
+    "description": "linear_regression_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', LinearRegression())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "knn_base",
+    "description": "knn_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', KNeighborsRegressor())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "svm_base",
+    "description": "svm_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', SVR())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "random_forest_base",
+    "description": "random_forest_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()),\n                ('reg', RandomForestRegressor(n_jobs=-1, random_state=0))])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "decision_tree_base",
+    "description": "decision_tree_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('reg', DecisionTreeRegressor())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "lightgbm_base",
+    "description": "lightgbm_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "LGBMRegressor(verbose=-1)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "xgboost_base",
+    "description": "xgboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "XGBRegressor(base_score=None, booster=None, callbacks=None,\n             colsample_bylevel=None, colsample_bynode=None,\n             colsample_bytree=None, device=None, early_stopping_rounds=None,\n             enable_categorical=True, eval_metric=None, feature_types=None,\n             feature_weights=None, gamma=None, grow_policy=None,\n             importance_type=None, interaction_constraints=None,\n             learning_rate=None, max_bin=None, max_cat_threshold=None,\n             max_cat_to_onehot=None, max_delta_step=None, max_depth=None,\n             max_leaves=None, min_child_weight=None, missing=nan,\n             monotone_constraints=None, multi_strategy=None, n_estimators=None,\n             n_jobs=None, num_parallel_tree=None, ...)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "catboost_base",
+    "description": "catboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "CatBoostRegressor(loss_function='RMSE', verbose=0)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "hgb_base",
+    "description": "hgb_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "HistGradientBoostingRegressor()",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "mlp_base",
+    "description": "mlp_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('imputer', SimpleImputer()), ('scaler', StandardScaler()),\n                ('reg', MLPRegressor(hidden_layer_sizes=(64, 32)))])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   }
+  ]
+ },
+ "test_run_base_experiments_builds_catalog[prep-classification]": {
+  "kwargs": {
+   "eval_overfitting": true,
+   "store_preds": true,
+   "verbose": false,
+   "compare_against": null
+  },
+  "pipelines": [
+   {
+    "name": "logistic_regression_base",
+    "description": "logistic_regression_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', LogisticRegression(max_iter=1000))])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "knn_base",
+    "description": "knn_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', KNeighborsClassifier())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "svm_base",
+    "description": "svm_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', SVC())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "random_forest_base",
+    "description": "random_forest_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()),\n                ('clf', RandomForestClassifier(n_jobs=-1, random_state=0))])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "decision_tree_base",
+    "description": "decision_tree_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('impute', SimpleImputer()), ('clf', DecisionTreeClassifier())])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "lightgbm_base",
+    "description": "lightgbm_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "LGBMClassifier(random_state=0, verbose=-1)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "xgboost_base",
+    "description": "xgboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "XGBClassifier(base_score=None, booster=None, callbacks=None,\n              colsample_bylevel=None, colsample_bynode=None,\n              colsample_bytree=None, device=None, early_stopping_rounds=None,\n              enable_categorical=True, eval_metric=None, feature_types=None,\n              feature_weights=None, gamma=None, grow_policy=None,\n              importance_type=None, interaction_constraints=None,\n              learning_rate=None, max_bin=None, max_cat_threshold=None,\n              max_cat_to_onehot=None, max_delta_step=None, max_depth=None,\n              max_leaves=None, min_child_weight=None, missing=nan,\n              monotone_constraints=None, multi_strategy=None, n_estimators=None,\n              n_jobs=None, num_parallel_tree=None, ...)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "catboost_base",
+    "description": "catboost_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "CatBoostClassifier(random_state=0, verbose=0)",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "hgb_base",
+    "description": "hgb_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "HistGradientBoostingClassifier()",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   },
+   {
+    "name": "mlp_base",
+    "description": "mlp_base with features = ['f1', 'f2']",
+    "steps": [
+     "preprocess",
+     "model"
+    ],
+    "estimator": "Pipeline(steps=[('imputer', SimpleImputer()), ('scaler', StandardScaler()),\n                ('clf', MLPClassifier(hidden_layer_sizes=(64, 32)))])",
+    "preprocess": "Pipeline(transformer-only)[\n    ('identity', Identity())\n]"
+   }
+  ]
+ },
+ "test_permutation_feature_importance_and_selection[single]": {
+  "importance": {
+   "schema": {
+    "f1": "Float64",
+    "f2": "Float64",
+    "f3": "Float64",
+    "f4": "Float64",
+    "fold_number": "Int32"
+   },
+   "data": {
+    "f1": [
+     24452.98,
+     43561.81
+    ],
+    "f2": [
+     4373.99,
+     13965.65
+    ],
+    "f3": [
+     -0.6,
+     44.58
+    ],
+    "f4": [
+     0.0,
+     0.0
+    ],
+    "fold_number": [
+     1,
+     2
+    ]
+   }
+  },
+  "selected": [
+   "f1",
+   "f2",
+   "f3"
+  ]
+ },
+ "test_permutation_feature_importance_and_selection[multi]": {
+  "importance": {
+   "schema": {
+    "f1": "Float64",
+    "f2": "Float64",
+    "f3": "Float64",
+    "f4": "Float64",
+    "fold_number": "Int32"
+   },
+   "data": {
+    "f1": [
+     24452.98,
+     43561.81
+    ],
+    "f2": [
+     4373.99,
+     13965.65
+    ],
+    "f3": [
+     -0.6,
+     44.58
+    ],
+    "f4": [
+     0.0,
+     0.0
+    ],
+    "fold_number": [
+     1,
+     2
+    ]
+   }
+  },
+  "selected": [
+   "f1",
+   "f2",
+   "f3"
+  ]
+ },
+ "test_checkpoint_round_trip[single]": {
+  "attributes": [
+   "_multi_metric",
+   "alpha",
+   "best_experiment",
+   "cv_generator",
+   "cv_indexes",
+   "eval_has_pct",
+   "eval_has_statistical",
+   "metric",
+   "metrics",
+   "minimize",
+   "minimize_list",
+   "n_folds",
+   "n_folds_threshold",
+   "n_iters",
+   "n_metrics",
+   "name",
+   "next_experiment_id",
+   "pct_threshold",
+   "results",
+   "results_details",
+   "row_id",
+   "target",
+   "test",
+   "test_downloader",
+   "train",
+   "train_downloader"
+  ],
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score": "Float64",
+    "train_mean_score": "Float64",
+    "mean_overfitting_pct": "Float64",
+    "cv_std_score": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2
+    ],
+    "name": [
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score": [
+     1.3706380581373458,
+     0.012001600098592987
+    ],
+    "train_mean_score": [
+     0.666253456087904,
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct": [
+     41.335,
+     52.235
+    ],
+    "cv_std_score": [
+     0.46857415247946455,
+     7.307577806904135e-05
+    ],
+    "is_completed": [
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_checkpoint_round_trip[multi]": {
+  "attributes": [
+   "_multi_metric",
+   "alpha",
+   "best_experiment",
+   "cv_generator",
+   "cv_indexes",
+   "eval_has_pct",
+   "eval_has_statistical",
+   "metric",
+   "metrics",
+   "minimize",
+   "minimize_list",
+   "n_folds",
+   "n_folds_threshold",
+   "n_iters",
+   "n_metrics",
+   "name",
+   "next_experiment_id",
+   "pct_threshold",
+   "results",
+   "results_details",
+   "row_id",
+   "target",
+   "test",
+   "test_downloader",
+   "train",
+   "train_downloader"
+  ],
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2
+    ],
+    "name": [
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     1.3706380581373458,
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.666253456087904,
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct_1": [
+     41.335,
+     52.235
+    ],
+    "cv_std_score_1": [
+     0.46857415247946455,
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.9794600781573006,
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.6680172901784286,
+     0.06338617257142617
+    ],
+    "mean_overfitting_pct_2": [
+     26.95,
+     30.310000000000002
+    ],
+    "cv_std_score_2": [
+     0.19821236171011236,
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true,
+     true
+    ]
+   }
+  }
+ },
+ "test_checkpoint_written_before_refactor_still_works": {
+  "best": 2,
+  "results": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     1,
+     2
+    ],
+    "name": [
+     "lr",
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1']",
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     1.3706380581373458,
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.666253456087904,
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct_1": [
+     41.335,
+     52.235
+    ],
+    "cv_std_score_1": [
+     0.46857415247946455,
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.9794600781573006,
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.6680172901784286,
+     0.06338617257142617
+    ],
+    "mean_overfitting_pct_2": [
+     26.95,
+     30.310000000000002
+    ],
+    "cv_std_score_2": [
+     0.19821236171011236,
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true,
+     true
+    ]
+   }
+  },
+  "best_score": {
+   "schema": {
+    "experiment_id": "Int64",
+    "name": "String",
+    "description": "String",
+    "cv_mean_score_1": "Float64",
+    "train_mean_score_1": "Float64",
+    "mean_overfitting_pct_1": "Float64",
+    "cv_std_score_1": "Float64",
+    "cv_mean_score_2": "Float64",
+    "train_mean_score_2": "Float64",
+    "mean_overfitting_pct_2": "Float64",
+    "cv_std_score_2": "Float64",
+    "is_completed": "Boolean"
+   },
+   "data": {
+    "experiment_id": [
+     2
+    ],
+    "name": [
+     "lr"
+    ],
+    "description": [
+     "lr on ['f1', 'f2']"
+    ],
+    "cv_mean_score_1": [
+     0.012001600098592987
+    ],
+    "train_mean_score_1": [
+     0.005727044431912982
+    ],
+    "mean_overfitting_pct_1": [
+     52.235
+    ],
+    "cv_std_score_1": [
+     7.307577806904135e-05
+    ],
+    "cv_mean_score_2": [
+     0.09088260309993185
+    ],
+    "train_mean_score_2": [
+     0.06338617257142617
+    ],
+    "mean_overfitting_pct_2": [
+     30.310000000000002
+    ],
+    "cv_std_score_2": [
+     0.0029366246878895046
+    ],
+    "is_completed": [
+     true
+    ]
+   }
+  },
+  "pipeline": "Pipeline(with estimator)[\n    ('model', EstimatorWrapper(LinearRegression(), features=['f1', 'f2'], target='target'))\n]",
+  "predictions": {
+   "schema": {
+    "row_id": "UInt32",
+    "fold_number": "Int32",
+    "target": "Float64",
+    "preds_1": "Float64",
+    "preds_2": "Float64"
+   },
+   "data": {
+    "row_id": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ],
+    "fold_number": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "target": [
+     1.2553267814228122,
+     -0.2319881332924893,
+     0.719547187865588,
+     -0.8439682389536693,
+     -1.595217374171083,
+     1.0368902321004212,
+     1.6032873681040698,
+     1.885225609751297,
+     -1.5478435622772162,
+     -2.05331676642552,
+     -1.0696461530916441,
+     0.32891005597248907,
+     -5.431658175334669,
+     -0.5041558124810377,
+     -1.6497298432035203,
+     0.15835231775796918,
+     -2.4230440769447332,
+     1.0502342072451207,
+     2.1403977257497036,
+     3.0237789674702413,
+     -0.03589228027702468,
+     2.3454557973287162,
+     0.15260987371959828,
+     2.7664237651229513
+    ],
+    "preds_1": [
+     0.9675083137845834,
+     0.3951936760094309,
+     2.109967308346768,
+     0.9212718854882104,
+     -0.5005954941736344,
+     1.4910557481901616,
+     3.5829051638845146,
+     2.7906545063843615,
+     -0.8736500516326728,
+     -2.1204208510034244,
+     -0.6950518658240377,
+     0.7801568400434813,
+     -4.00517197150382,
+     -0.44936316202518245,
+     -2.183373216938547,
+     -1.3162264613606793,
+     -0.9988257344118431,
+     -0.6139795888319224,
+     0.6149323408675039,
+     1.6800054962234139,
+     -0.2969888956844292,
+     2.2269066611920603,
+     -1.2029925794458145,
+     0.5134353728615023
+    ],
+    "preds_2": [
+     1.2090924705337058,
+     -0.1732254120007121,
+     0.48734548694940194,
+     -0.7801373432081349,
+     -1.5737481232276749,
+     0.9545955924202564,
+     1.5383635701524394,
+     1.674338613667051,
+     -1.5933781683096524,
+     -1.976429209723495,
+     -1.03261028315461,
+     0.4545208602308448,
+     -5.571294766661208,
+     -0.5833509684204153,
+     -1.7734828998444643,
+     0.060865333460601995,
+     -2.4680583992119614,
+     0.9577253122953502,
+     2.310556531839935,
+     3.0379382759507347,
+     0.02521306557983958,
+     2.5557920420581945,
+     0.16434632496211213,
+     2.836841927268604
+    ]
+   }
+  },
+  "stdout": "\n\u001b[1m\u001b[34m============================================================\n  Metric 1\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m99.12%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m99.98%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m98.84%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m99.3%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-26.37%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m25560.0%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m50.77%\u001b[0m\n\n\u001b[1m\u001b[34m============================================================\n  Metric 2\n============================================================\u001b[0m\n\n\u001b[1m\u001b[34mRelative Performance Report Experiment B (Current) vs Experiment A (Chosen Baseline)\u001b[0m\n\n    \u001b[1m\u001b[34mNote: positive performances like reduction of overfitting or increment/decrement of the metrics over the CV are indicated in \u001b[0m\u001b[1m\u001b[32mGREEN\u001b[0m,\n    \u001b[1m\u001b[34mwhile negative performances are indicated in \u001b[1m\u001b[31mRED\u001b[0m\n\n    \nMean CV Score Experiment B vs A: \u001b[1m\u001b[32m90.72%\u001b[0m\nStd CV Score Experiment B vs A: \u001b[1m\u001b[32m98.52%\u001b[0m\n\nFold 1 Score Performance Experiment B vs A: \u001b[1m\u001b[32m89.42%\u001b[0m\nFold 2 Score Performance Experiment B vs A: \u001b[1m\u001b[32m91.7%\u001b[0m\nNumber of Folds Experiment B is Better then A: \u001b[1m\u001b[32m2\u001b[0m\n\nMean % Overfitting Score Experiment B vs A: \u001b[1m\u001b[31m-12.47%\u001b[0m\n\t - Fold 1 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m571.57%\u001b[0m\n\t - Fold 2 % Overfitting Score Performance Experiment B vs A: \u001b[1m\u001b[32m54.07%\u001b[0m\n"
+ }
+}

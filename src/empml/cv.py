@@ -7,9 +7,6 @@ import polars as pl
 # internal imports
 from empml.base import CVGenerator  # base class
 
-# streaming engine as the default for .collect()
-pl.Config.set_engine_affinity(engine="streaming")
-
 # ------------------------------------------------------------------------------------------
 # Implementations of the CVGenerator base class
 # ------------------------------------------------------------------------------------------
@@ -19,8 +16,8 @@ class KFold(CVGenerator):
     """
     Standard K-Fold cross-validation with random shuffling.
 
-    Randomly shuffles data and splits it into k equal-sized folds. Each fold
-    serves as validation set once while remaining folds form the training set.
+    Randomly shuffles data and splits it into k folds whose sizes differ by at
+    most one row. Every row serves as validation data exactly once.
 
     Parameters
     ----------
@@ -39,7 +36,9 @@ class KFold(CVGenerator):
         self.n_splits = n_splits
         self.random_state = random_state
 
-    def split(self, lf: pl.LazyFrame, row_id: str) -> list[tuple[np.array]]:
+    def split(
+        self, lf: pl.LazyFrame, row_id: str
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
         """
         Generate k-fold train/validation splits.
 
@@ -58,15 +57,7 @@ class KFold(CVGenerator):
         shuffle_df: pl.DataFrame = lf.collect().sample(
             fraction=1, seed=self.random_state, shuffle=True
         )
-        n_rows: int = shuffle_df.shape[0]
-        slice_size = int(n_rows / self.n_splits)
-
-        valid_row_id = [
-            shuffle_df.slice(offset=slice_size * i, length=slice_size)[
-                row_id
-            ].to_numpy()
-            for i in range(self.n_splits)
-        ]
+        valid_row_id = np.array_split(shuffle_df[row_id].to_numpy(), self.n_splits)
 
         result = [
             (
@@ -108,7 +99,9 @@ class StratifiedKFold(CVGenerator):
         self.random_state = random_state
         self.target_col = target_col
 
-    def split(self, lf: pl.LazyFrame, row_id: str) -> list[tuple[np.array]]:
+    def split(
+        self, lf: pl.LazyFrame, row_id: str
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
         """
         Generate stratified k-fold train/validation splits.
 
@@ -189,7 +182,9 @@ class GroupKFold(CVGenerator):
         self.random_state = random_state
         self.group_col = group_col
 
-    def split(self, lf: pl.LazyFrame, row_id: str) -> list[tuple[np.array]]:
+    def split(
+        self, lf: pl.LazyFrame, row_id: str
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
         """
         Generate group-aware k-fold train/validation splits.
 
@@ -344,7 +339,8 @@ class TimeSeriesSplit(CVGenerator):
 
     Notes
     -----
-    - The split method automatically converts string dates to datetime if needed.
+    - String date columns are parsed; native Polars Date and Datetime columns are
+      used directly. Other column types are rejected.
     - Train and validation windows can overlap or have gaps depending on requirements.
     - Each fold's train set can have different sizes, allowing for expanding window strategies.
     """
@@ -386,34 +382,37 @@ class TimeSeriesSplit(CVGenerator):
 
         Notes
         -----
-        - If date_col is not already datetime type, it will be automatically converted
-          from string format using polars' str.to_datetime() method.
+        - String columns are converted with ``str.to_datetime()``. Native Date
+          and Datetime columns are accepted without conversion.
         - Date filtering uses inclusive start (>=) and exclusive end (<) boundaries.
         """
-        # check if date_col is datetime, otherwise cast it
-        dates_dtype = lf.select([self.date_col]).collect().to_series().dtype
-        is_datetime = dates_dtype in [
-            pl.Datetime,
-            pl.Datetime("ms"),
-            pl.Datetime("us"),
-            pl.Datetime("ns"),
-        ]
-
-        if not is_datetime:
+        dates_dtype = lf.collect_schema()[self.date_col]
+        is_date = dates_dtype == pl.Date
+        if dates_dtype == pl.String:
             lf = lf.with_columns(
                 pl.col(self.date_col).str.to_datetime().alias(self.date_col)
             )
+            is_date = False
+        elif dates_dtype != pl.Date and not isinstance(dates_dtype, pl.Datetime):
+            raise TypeError(
+                f"{self.date_col!r} must be a Polars Date, Datetime, or String "
+                f"column, got {dates_dtype}."
+            )
+
+        def boundary(value: str):
+            parsed = pd.to_datetime(value)
+            return parsed.date() if is_date else parsed.to_pydatetime()
 
         result = [
             (
-                lf.filter(pl.col(self.date_col) >= pd.to_datetime(window[0]))
-                .filter(pl.col(self.date_col) < pd.to_datetime(window[1]))
+                lf.filter(pl.col(self.date_col) >= boundary(window[0]))
+                .filter(pl.col(self.date_col) < boundary(window[1]))
                 .collect()
                 .select([row_id])
                 .to_series()
                 .to_numpy(),  # train row ids
-                lf.filter(pl.col(self.date_col) >= pd.to_datetime(window[2]))
-                .filter(pl.col(self.date_col) < pd.to_datetime(window[3]))
+                lf.filter(pl.col(self.date_col) >= boundary(window[2]))
+                .filter(pl.col(self.date_col) < boundary(window[3]))
                 .collect()
                 .select([row_id])
                 .to_series()
@@ -471,12 +470,20 @@ class TrainTestSplit(CVGenerator):
         -------
         List[Tuple[np.ndarray, np.ndarray]]
             Single-element list containing (train_indices, test_indices) tuple.
+
+        Raises
+        ------
+        ValueError
+            If the input has fewer than two rows. For valid inputs, both returned
+            partitions contain at least one row.
         """
         shuffle_df: pl.DataFrame = lf.collect().sample(
             fraction=1, seed=self.random_state, shuffle=True
         )
         n_rows: int = shuffle_df.shape[0]
-        test_slice_size = int(n_rows * self.test_size)
+        if n_rows < 2:
+            raise ValueError("TrainTestSplit requires at least two rows.")
+        test_slice_size = min(max(int(n_rows * self.test_size), 1), n_rows - 1)
 
         # Split into test and train
         test_row_id = shuffle_df.slice(offset=0, length=test_slice_size)[
