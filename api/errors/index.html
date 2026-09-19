@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../EmpiricML-logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -460,6 +460,8 @@
       
         
       
+        
+      
     
     
     
@@ -708,6 +710,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#targettransformerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TargetTransformError
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -788,6 +801,34 @@
     
   
     Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../target/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target
   
 
     
@@ -966,6 +1007,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#targettransformerror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TargetTransformError
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1051,12 +1103,20 @@
 <td style="text-align: left;"><code>RunExperimentOnTestException</code></td>
 <td style="text-align: left;">Exception raised when errors occur during testing on the test set.</td>
 </tr>
+<tr>
+<td style="text-align: left;"><code>TargetTransformError</code></td>
+<td style="text-align: left;">Exception raised when a target transformation cannot be applied or inverted.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="runexperimentconfigexception">RunExperimentConfigException<a class="headerlink" href="#runexperimentconfigexception" title="Permanent link">&para;</a></h2>
 <p>Exception raised for invalid experiment configurations.</p>
 <h2 id="runexperimentontestexception">RunExperimentOnTestException<a class="headerlink" href="#runexperimentontestexception" title="Permanent link">&para;</a></h2>
 <p>Exception raised when errors occur during testing on the test set.</p>
+<h2 id="targettransformerror">TargetTransformError<a class="headerlink" href="#targettransformerror" title="Permanent link">&para;</a></h2>
+<p>Exception raised when a target transformation cannot be applied or inverted.</p>
+<p>Subclasses <code>ValueError</code>. Raised when the target holds values outside the transformation's domain, when the
+target column is missing, or when a prediction cannot be mapped back. See <a href="../target/"><code>empml.target</code></a>.</p>
 
 
 
@@ -1134,7 +1194,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.path", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

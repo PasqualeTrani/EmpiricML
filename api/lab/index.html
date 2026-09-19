@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../EmpiricML-logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -439,6 +439,8 @@
   
     
     
+      
+        
       
         
       
@@ -1052,6 +1054,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../target/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Target
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../transformers/" class="md-nav__link">
         
   
@@ -1576,7 +1606,9 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 <li><code>target</code>: Name of target column.</li>
 <li><code>comparison_criteria</code>: Statistical criteria for experiment comparison.</li>
 <li><code>minimize</code>: Whether to minimize metric(s) (default True). When <code>metric</code> is a list, this can be a list of bools matching the length of <code>metric</code>.</li>
-<li><code>row_id</code>: Column name for row identifier.</li>
+<li><code>row_id</code>: Column name for row identifier. Caller-supplied identifiers must
+    exist, be non-null/non-NaN, and be unique; otherwise initialization raises
+    <code>ValueError</code>.</li>
 <li><code>test_downloader</code>: Optional test data source.</li>
 <li><code>name</code>: Lab identifier (auto-generated if None).</li>
 </ul>
@@ -1623,7 +1655,7 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">store_preds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>                   <span class="c1"># if True, predictions will be stored</span>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>                       <span class="c1"># if True, progress will be printed</span>
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">compare_against</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>         <span class="c1"># id of the experiment to compare against</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;regression&#39;</span>            <span class="c1"># &#39;regression&#39; or &#39;classification&#39;</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">problem_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'regression'</span>            <span class="c1"># 'regression' or 'classification'</span>
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
 </span></code></pre></div>
 <h4 id="hpo"><code>hpo</code><a class="headerlink" href="#hpo" title="Permanent link">&para;</a></h4>
@@ -1638,10 +1670,10 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 </span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">store_preds</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>                   <span class="c1"># if True, predictions will be stored</span>
 </span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">verbose</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>                       <span class="c1"># if True, progress will be printed</span>
 </span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">compare_against</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>         <span class="c1"># id of the experiment to compare against</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">search_type</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;grid&#39;</span><span class="p">,</span>                  <span class="c1"># &#39;grid&#39; or &#39;random&#39;</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">search_type</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'grid'</span><span class="p">,</span>                  <span class="c1"># 'grid' or 'random'</span>
 </span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">num_samples</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>                      <span class="c1"># number of samples for random search</span>
 </span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="n">random_state</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">primary_metric_idx</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span>       <span class="c1"># for multi-metric: which metric to optimize (0-indexed or &#39;all&#39;)</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">primary_metric_idx</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'all'</span>       <span class="c1"># for multi-metric: which metric to optimize (0-indexed or 'all')</span>
 </span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="p">)</span>
 </span></code></pre></div>
 <p><strong>Multi-Metric HPO</strong>: The <code>primary_metric_idx</code> parameter controls best-model selection:</p>
@@ -1653,6 +1685,10 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 <p>Load predictions from specified experiments.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">retrieve_predictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment_ids</span> <span class="o">=</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">extra_features</span> <span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">LazyFrame</span>
 </span></code></pre></div>
+<p>Prediction artifacts are keyed by row ID and <code>fold_number</code>, so retrieval remains
+aligned even when folds are shuffled. Rows from unevaluated folds in an
+early-stopped experiment have null predictions. Legacy one-column prediction
+artifacts remain readable using their original source-filter order.</p>
 <h4 id="compute_pvalue"><code>compute_pvalue</code><a class="headerlink" href="#compute_pvalue" title="Permanent link">&para;</a></h4>
 <p>Compute permutation test p-value(s) comparing two experiments.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute_pvalue</span><span class="p">(</span>
@@ -1726,16 +1762,16 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 </span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>    <span class="n">train_downloader</span><span class="o">=</span><span class="n">my_train_downloader_object</span><span class="p">,</span>
 </span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>    <span class="n">metric</span><span class="o">=</span><span class="n">my_metric_object</span><span class="p">,</span>
 </span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="n">cv_generator</span><span class="o">=</span><span class="n">my_cv_object</span><span class="p">,</span>
-</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;target_variable&#39;</span><span class="p">,</span>
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">target</span><span class="o">=</span><span class="s1">'target_variable'</span><span class="p">,</span>
 </span><span id="__span-13-16"><a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a>    <span class="n">comparison_criteria</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span>
 </span><span id="__span-13-17"><a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>    <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;experiment_lab_01&#39;</span>
+</span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a>    <span class="n">name</span><span class="o">=</span><span class="s1">'experiment_lab_01'</span>
 </span><span id="__span-13-19"><a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="p">)</span>
 </span><span id="__span-13-20"><a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>
 </span><span id="__span-13-21"><a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="c1"># 3. Run Base Experiments</span>
 </span><span id="__span-13-22"><a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="n">lab</span><span class="o">.</span><span class="n">run_base_experiments</span><span class="p">(</span>
-</span><span id="__span-13-23"><a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;feature_A&#39;</span><span class="p">,</span> <span class="s1">&#39;feature_B&#39;</span><span class="p">],</span>
-</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="n">problem_type</span><span class="o">=</span><span class="s1">&#39;classification&#39;</span>
+</span><span id="__span-13-23"><a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a>    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">'feature_A'</span><span class="p">,</span> <span class="s1">'feature_B'</span><span class="p">],</span>
+</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>    <span class="n">problem_type</span><span class="o">=</span><span class="s1">'classification'</span>
 </span><span id="__span-13-25"><a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="p">)</span>
 </span><span id="__span-13-26"><a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a>
 </span><span id="__span-13-27"><a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="c1"># 4. View Best Results</span>
@@ -1750,10 +1786,10 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
 </span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">train_downloader</span><span class="o">=</span><span class="n">my_train_downloader_object</span><span class="p">,</span>
 </span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="n">metric</span><span class="o">=</span><span class="p">[</span><span class="n">RMSE</span><span class="p">(),</span> <span class="n">MAE</span><span class="p">()],</span>
 </span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">cv_generator</span><span class="o">=</span><span class="n">my_cv_object</span><span class="p">,</span>
-</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="n">target</span><span class="o">=</span><span class="s1">&#39;target_variable&#39;</span><span class="p">,</span>
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="n">target</span><span class="o">=</span><span class="s1">'target_variable'</span><span class="p">,</span>
 </span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    <span class="n">comparison_criteria</span><span class="o">=</span><span class="n">ComparisonCriteria</span><span class="p">(</span><span class="n">n_folds_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pct_threshold</span><span class="o">=</span><span class="mf">0.05</span><span class="p">),</span>
 </span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="n">minimize</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span>  <span class="c1"># both metrics should be minimized</span>
-</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;multi_metric_lab&#39;</span>
+</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    <span class="n">name</span><span class="o">=</span><span class="s1">'multi_metric_lab'</span>
 </span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="p">)</span>
 </span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>
 </span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="c1"># Run experiments - comparison checks ALL metrics</span>
@@ -1845,7 +1881,7 @@ Manages experiment lifecycle: data loading, CV splitting, pipeline execution, re
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.path", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
