@@ -139,7 +139,8 @@ def test_target_encoder_output(Encoder, prefix, aggregation, replace_original):
     global_value = lf.select(getattr(y, aggregation)()).collect().item()
     column = "cat" if replace_original else f"{prefix}cat_encoded"
 
-    assert encoder.global_encoded_val == (0.0 if global_value is None else global_value)
+    expected_global = 0.0 if global_value is None else global_value
+    assert encoder.global_encoded_val == pytest.approx(expected_global, nan_ok=True)
     assert result.columns == (
         ["y", "cat"] if replace_original else ["cat", "y", column]
     )

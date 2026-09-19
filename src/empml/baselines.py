@@ -57,7 +57,7 @@ def _classification_estimators() -> dict[str, Any]:
             [("impute", SimpleImputer()), ("clf", dtree())]
         ),
         "lightgbm_base": lgb(verbose=-1, random_state=0),
-        "xgboost_base": xgb(verbosity=0, random_state=0),
+        "xgboost_base": xgb(verbosity=0, random_state=0, enable_categorical=True),
         "catboost_base": ctb(verbose=0, random_state=0),
         "hgb_base": hgb(),
         "mlp_base": SKlearnPipeline(
@@ -117,7 +117,7 @@ def _regression_estimators() -> dict[str, Any]:
             [("impute", SimpleImputer()), ("reg", dtree())]
         ),
         "lightgbm_base": lgb(verbose=-1),
-        "xgboost_base": xgb(verbosity=0),
+        "xgboost_base": xgb(verbosity=0, enable_categorical=True),
         "catboost_base": ctb(verbose=0),
         "hgb_base": hgb(),
         "mlp_base": SKlearnPipeline(
