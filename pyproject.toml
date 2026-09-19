@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "EmpiricML"
-version = "0.2.1"
+version = "0.2.2"
 authors = [
     {name = "Pasquale Trani", email = "ptrani96ds@gmail.com"}
 ]
@@ -90,7 +90,7 @@ check_untyped_defs = false
 cache_dir = ".cache/mypy"
 
 [tool.bumpversion]
-current_version = "0.2.1"
+current_version = "0.2.2"
 commit = true
 tag = true
 tag_name = "v{new_version}"
