@@ -162,7 +162,7 @@ def compute_pvalue(
 Returns a single `float` for single-metric Labs, or a `List[float]` (one p-value per metric) for multi-metric Labs.
 
 #### `permutation_feature_importance`
-Compute permutation feature importance for each feature.
+Compute permutation importance for the final features used by the estimator.
 
 ```python
 def permutation_feature_importance(
@@ -174,10 +174,31 @@ def permutation_feature_importance(
 ) -> pl.DataFrame
 ```
 
-**Note:** For multi-metric Labs, this method uses the first metric only.
+`features` is required and names columns **after preprocessing**; it may be a
+subset of the model's inputs. Missing columns and columns outside the estimator's
+declared `features` raise `ValueError`. For custom estimators without a feature
+list, the caller's explicit list determines which columns are evaluated.
+
+Each fold fits the full pipeline on training data, transforms validation data
+once, and shuffles each final column independently. For example, shuffling `x`
+leaves `x_squared` unchanged, and `x_squared` can be evaluated on its own. Nested
+pipelines and `TransformedTargetRegressor` are supported; target inverses retain
+their normal clipping and error behavior, and scoring uses the original target.
+As elsewhere in `Pipeline`, preprocessing must preserve row count and order.
+
+The result has one row per fold, one importance column per requested feature,
+and a 1-based `fold_number`. The relative score-change formula, shuffle seeds
+(`0` through `n_iters - 1`), and handling of a zero baseline score (null importance)
+are unchanged. For multi-metric Labs, this method uses the first metric only.
+
+**Migration:** Earlier versions shuffled source columns before rerunning the
+pipeline. Existing calls must now pass final column names. Even when names are
+unchanged, importance now measures each model input independently rather than
+the combined effect on all features derived from a source column.
 
 #### `recursive_permutation_feature_selection`
-Recursively eliminate features with negative importance.
+Recursively eliminate final features whose mean importance across folds is zero
+or negative.
 
 ```python
 def recursive_permutation_feature_selection(
@@ -189,6 +210,12 @@ def recursive_permutation_feature_selection(
     verbose : bool = True
 ) -> List[str]
 ```
+
+`features` names the final columns passed to the model. Each iteration removes
+columns from that model input list while retaining the original data and source
+columns required by `preprocessor`. The result is the retained final feature
+names, or `[]` if all features are eliminated (also returned for an empty input
+list). Null importance is not treated as zero.
 
 #### `run_experiment_on_test`
 Compute performance metrics of a pipeline associated with an experiment on the test set.

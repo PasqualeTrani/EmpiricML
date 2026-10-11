@@ -143,7 +143,7 @@ By following these patterns, you can integrate virtually any custom logic into t
 Install the development dependencies and run the checks from the repository root:
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev]" "polars==1.44.2"
 pytest --cov=empml --cov-report=term-missing
 ruff format --check src tests
 ruff check src tests
@@ -151,7 +151,9 @@ ruff check src tests
 
 The test suite leaves the repository clean. Each test runs in its own pytest temporary directory, so `Lab` artifact folders never appear in the project. The pytest, coverage, ruff, and mypy caches are all written to the git-ignored `.cache/` folder.
 
-The Lab tests in `tests/test_lab_characterization.py` compare observable results with golden snapshots in `tests/fixtures/`. If you change Lab behavior on purpose, regenerate them with `EMPML_UPDATE_GOLDEN=1 pytest tests/test_lab_characterization.py` and review the fixture diff. `tests/fixtures/legacy_lab_checkpoint.pkl` is never regenerated, because it proves that checkpoints saved by older releases still load.
+The Lab tests in `tests/test_lab_characterization.py` compare observable results with golden snapshots in `tests/fixtures/`. If you change Lab behavior on purpose, regenerate them with `EMPML_UPDATE_GOLDEN=1 pytest tests/test_lab_characterization.py` and review the fixture diff. `tests/fixtures/legacy_lab_checkpoint.pkl` is never regenerated, because it verifies compatibility with the pre-refactor Lab class.
+
+CI tests on Python 3.11 and 3.12 and the installation command above pin Polars to 1.44.2, which can deserialize the legacy checkpoint's embedded `LazyFrame` plans. Other Polars versions can reject those plans with a `DSL_SCHEMA_HASH` or `DSL_VERSION` mismatch. The fixture tests Lab compatibility in a compatible dependency environment; it does not guarantee checkpoint portability across Polars versions. The package's runtime requirement remains `polars>=1.31.0`, but these CI test jobs cover only Polars 1.44.2.
 
 ---
 
