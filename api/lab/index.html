@@ -1700,7 +1700,7 @@ artifacts remain readable using their original source-filter order.</p>
 </span></code></pre></div>
 <p>Returns a single <code>float</code> for single-metric Labs, or a <code>List[float]</code> (one p-value per metric) for multi-metric Labs.</p>
 <h4 id="permutation_feature_importance"><code>permutation_feature_importance</code><a class="headerlink" href="#permutation_feature_importance" title="Permanent link">&para;</a></h4>
-<p>Compute permutation feature importance for each feature.</p>
+<p>Compute permutation importance for the final features used by the estimator.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">permutation_feature_importance</span><span class="p">(</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">pipeline</span> <span class="p">:</span> <span class="n">Pipeline</span><span class="p">,</span>
@@ -1709,9 +1709,27 @@ artifacts remain readable using their original source-filter order.</p>
 </span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">verbose</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span>
 </span></code></pre></div>
-<p><strong>Note:</strong> For multi-metric Labs, this method uses the first metric only.</p>
+<p><code>features</code> is required and names columns <strong>after preprocessing</strong>; it may be a
+subset of the model's inputs. Missing columns and columns outside the estimator's
+declared <code>features</code> raise <code>ValueError</code>. For custom estimators without a feature
+list, the caller's explicit list determines which columns are evaluated.</p>
+<p>Each fold fits the full pipeline on training data, transforms validation data
+once, and shuffles each final column independently. For example, shuffling <code>x</code>
+leaves <code>x_squared</code> unchanged, and <code>x_squared</code> can be evaluated on its own. Nested
+pipelines and <code>TransformedTargetRegressor</code> are supported; target inverses retain
+their normal clipping and error behavior, and scoring uses the original target.
+As elsewhere in <code>Pipeline</code>, preprocessing must preserve row count and order.</p>
+<p>The result has one row per fold, one importance column per requested feature,
+and a 1-based <code>fold_number</code>. The relative score-change formula, shuffle seeds
+(<code>0</code> through <code>n_iters - 1</code>), and handling of a zero baseline score (null importance)
+are unchanged. For multi-metric Labs, this method uses the first metric only.</p>
+<p><strong>Migration:</strong> Earlier versions shuffled source columns before rerunning the
+pipeline. Existing calls must now pass final column names. Even when names are
+unchanged, importance now measures each model input independently rather than
+the combined effect on all features derived from a source column.</p>
 <h4 id="recursive_permutation_feature_selection"><code>recursive_permutation_feature_selection</code><a class="headerlink" href="#recursive_permutation_feature_selection" title="Permanent link">&para;</a></h4>
-<p>Recursively eliminate features with negative importance.</p>
+<p>Recursively eliminate final features whose mean importance across folds is zero
+or negative.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">recursive_permutation_feature_selection</span><span class="p">(</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">estimator</span> <span class="p">:</span> <span class="n">SKlearnEstimator</span><span class="p">,</span>
@@ -1721,6 +1739,11 @@ artifacts remain readable using their original source-filter order.</p>
 </span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">verbose</span> <span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 </span></code></pre></div>
+<p><code>features</code> names the final columns passed to the model. Each iteration removes
+columns from that model input list while retaining the original data and source
+columns required by <code>preprocessor</code>. The result is the retained final feature
+names, or <code>[]</code> if all features are eliminated (also returned for an empty input
+list). Null importance is not treated as zero.</p>
 <h4 id="run_experiment_on_test"><code>run_experiment_on_test</code><a class="headerlink" href="#run_experiment_on_test" title="Permanent link">&para;</a></h4>
 <p>Compute performance metrics of a pipeline associated with an experiment on the test set.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">run_experiment_on_test</span><span class="p">(</span>
