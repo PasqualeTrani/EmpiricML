@@ -120,20 +120,92 @@ best_result = lab.hpo(
 
 ## 7. Permutation Feature Importance
 
-Analyze which features contribute most to the model's performance.
+Analyze which final, preprocessed columns contribute most to the model's performance.
 
 ```python
-# Retrieve the best pipeline
-pipeline = lab.retrieve_pipeline(experiment_id=1)
+from empml.transformers import PowerFeatures
 
-# Calculate feature importance
-pfi : pl.DataFrame= lab.permutation_feature_importance(
+final_features = ['feature1', 'feature1_squared', 'feature2']
+pipeline = Pipeline([
+    ('power', PowerFeatures(['feature1'], suffix='_squared')),
+    ('model', SKlearnWrapper(
+        estimator=LGBMRegressor(verbose=-1),
+        features=final_features,
+        target='target_column'
+    ))
+])
+
+# A subset of final model inputs is also valid.
+pfi = lab.permutation_feature_importance(
     pipeline=pipeline,
-    features=['feature1', 'feature2', 'feature3'],
+    features=['feature1', 'feature1_squared'],
     n_iters=5
 )
 
 pfi
+```
+
+Each fold fits the pipeline normally and materializes validation preprocessing
+once. Permuting `feature1` leaves `feature1_squared` fixed, and vice versa.
+Earlier versions permuted source columns before preprocessing; update existing
+calls to use final names. Scores still use the original target, including with
+`TransformedTargetRegressor`.
+
+### Complete local example
+
+This self-contained example uses in-memory data, generated features, a target
+transformation, and recursive selection. Lab directories stay under `.cache/`.
+
+```python
+import numpy as np
+import polars as pl
+from sklearn.linear_model import Ridge
+
+from empml.base import DataDownloader
+from empml.cv import KFold
+from empml.lab import ComparisonCriteria, Lab
+from empml.metrics import MSE
+from empml.pipeline import Pipeline
+from empml.target import Log1pTarget, TransformedTargetRegressor
+from empml.transformers import PowerFeatures
+from empml.wrappers import SKlearnWrapper
+
+
+class DemoData(DataDownloader):
+    def get_data(self):
+        rng = np.random.default_rng(7)
+        x = rng.uniform(-2, 2, 120)
+        y = np.expm1(1 + 0.5 * x**2 + rng.normal(0, 0.1, len(x)))
+        return pl.LazyFrame({'x': x, 'y': y})
+
+
+lab = Lab(
+    train_downloader=DemoData(),
+    cv_generator=KFold(n_splits=3, random_state=7),
+    metric=MSE(),
+    target='y',
+    minimize=True,
+    comparison_criteria=ComparisonCriteria(n_folds_threshold=1, pct_threshold=0),
+    name='.cache/final-feature-example',
+)
+preprocessor = PowerFeatures(['x'], suffix='_squared')
+pipeline = Pipeline([
+    ('power', preprocessor),
+    ('model', TransformedTargetRegressor(
+        SKlearnWrapper(Ridge(), ['x', 'x_squared'], 'y'), Log1pTarget()
+    )),
+])
+importance = lab.permutation_feature_importance(
+    pipeline, features=['x', 'x_squared'], n_iters=3, verbose=False
+)
+print(importance)
+
+# Recursive selection takes a plain sklearn estimator and final feature names.
+selected = lab.recursive_permutation_feature_selection(
+    Ridge(), features=['x', 'x_squared'], preprocessor=preprocessor,
+    n_iters=3, verbose=False
+)
+print('Selected final features:', selected)
 ```
 
 ## 8. Retrieving Predictions & Error Analysis
@@ -233,20 +305,22 @@ lab = Lab(
 
 ## 11. Recursive Feature Selection
 
-Automatically identify and remove features that hurt model performance using permutation-based importance.
+Automatically remove final features with mean permutation importance <= 0.
 
 ```python
 from lightgbm import LGBMRegressor
+from empml.transformers import PowerFeatures
 
-# Recursively remove features with negative importance
+# Source feature1 stays available even if it is removed from the model inputs.
 selected_features = lab.recursive_permutation_feature_selection(
     estimator=LGBMRegressor(verbose=-1),
-    features=['feature1', 'feature2', 'feature3', 'feature4', 'feature5'],
+    features=['feature1', 'feature1_squared', 'feature2'],
+    preprocessor=PowerFeatures(['feature1'], suffix='_squared'),
     n_iters=5,
     verbose=True
 )
 
-# selected_features contains only the features that contribute positively
+# An empty list is returned if every feature is eliminated.
 print(f"Selected features: {selected_features}")
 ```
 

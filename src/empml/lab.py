@@ -547,10 +547,12 @@ class Lab:
         verbose: bool = True,
     ) -> pl.DataFrame:
         """
-        Compute permutation feature importance for each feature.
+        Compute permutation importance for final, preprocessed features.
 
-        Measures performance drop when feature is randomly shuffled.
-        Returns DataFrame with importance scores per fold.
+        ``features`` is required and may be a subset of the final estimator's
+        inputs. Each column is shuffled independently after preprocessing, which
+        is materialized once per fold. Returns importance scores per fold, scored
+        against the original target, including when using target transformations.
 
         Note:
             For multi-metric Labs, uses the first metric only.
@@ -577,11 +579,13 @@ class Lab:
         verbose: bool = True,
     ) -> list[str]:
         """
-        Recursively eliminate features with negative importance.
+        Recursively eliminate final features with mean importance <= 0.
 
-        Returns list of selected features after iterative removal.
+        ``features`` names the preprocessed columns passed to the estimator.
+        Source columns remain available to the preprocessor after elimination.
+        Returns the retained names, or an empty list if all features are removed.
         """
-        while True:
+        while features:
             pipeline = Pipeline(
                 [
                     ("preprocessor", preprocessor),
@@ -603,6 +607,8 @@ class Lab:
 
             features = [f for f in features if f not in features_to_drop]
             logging.info(f"Features eliminated: {features_to_drop}")
+
+        return []
 
     # ------------------------------------------------------------------------------------------
     # Test set, retrieval, and checkpoints
